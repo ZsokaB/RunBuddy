@@ -73,7 +73,7 @@ console.log(workout);
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.5,
+      quality: 0.1,
       base64: true
     });
     if (!result.canceled) setImage(result.assets[0]); 
@@ -84,7 +84,7 @@ console.log(workout);
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.5,
+      quality: 0.1,
       base64: true
     });
     if (!result.canceled) setImage(result.assets[0]);
@@ -121,29 +121,29 @@ console.log(workout);
 
   }
 
-const saveTrainingProgress = async (workout) => {
-  trainingDay = workout.day;
-  trainingWeek = workout.week;
-    try {
-    const token = await AsyncStorage.getItem("authToken");
+// const saveTrainingProgress = async (workout) => {
+//   trainingDay = workout.day;
+//   trainingWeek = workout.week;
+//     try {
+//     const token = await AsyncStorage.getItem("authToken");
 
-    if (!token) {
-      throw new Error("No token found");
-    }
+//     if (!token) {
+//       throw new Error("No token found");
+//     }
 
-    const response = await api.post(`/runs/saveRunProgress/`,  { trainingWeek, trainingDay  },
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-    console.log("Training progress saved:", response.data);
-  } catch (error) {
-    console.error("Error saving training progress:", error.response ? error.response.data : error.message);
-  }
-};
+//     const response = await api.post(`/runs/saveRunProgress/`,  { trainingWeek, trainingDay  },
+//       {
+//         headers: {
+//           "Authorization": `Bearer ${token}`,
+//           "Content-Type": "application/json"
+//         }
+//       }
+//     );
+//     console.log("Training progress saved:", response.data);
+//   } catch (error) {
+//     console.error("Error saving training progress:", error.response ? error.response.data : error.message);
+//   }
+// };
 
   const saveRun = async () => {
   try {
@@ -178,7 +178,7 @@ const saveTrainingProgress = async (workout) => {
       await uploadImage(response.data.runId);
        
     } 
-     await saveTrainingProgress(workout);
+    //  await saveTrainingProgress(workout);
   
   } catch (error) {
   if (error.response) {

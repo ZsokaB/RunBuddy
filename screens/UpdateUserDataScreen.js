@@ -33,7 +33,7 @@ const UpdateUserDataScreen = ({ route }) => {
           const userData = response.data;
 
           reset({
-            username: userData.username || "",
+            username: userData.userName || "",
             firstName: userData.firstName || "",
             lastName: userData.lastName || "",
             gender: userData.gender || "",

@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert, ScrollView, Image, TouchableOpacity } from 're
 import { TextInput, Button, Text, Title, RadioButton } from 'react-native-paper';
 import * as ImagePicker from "expo-image-picker";
 import api from "../axiosInstance";
+import { v4 as uuidv4 } from 'uuid';
 
 const RegisterScreen = ({ navigation }) => {
   const [step, setStep] = useState(1); // Controls step navigation
@@ -19,41 +20,97 @@ const RegisterScreen = ({ navigation }) => {
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [birthdate, setBirthdate] = useState('');
+    const [image, setImage] = useState(null);
 
-  const handleRegister = async () => {
-    try {
-      await api.post('/auth/register', {
-        firstName,
-        lastName,
-        username,
-        email,
-        password,
-        gender,
-        weight,
-        height,
-        birthdate,
-        profilePicture: null,
-      }, { headers: { 'Content-Type': 'application/json' }});
-      Alert.alert('Registration successful', 'You can now log in.');
-      navigation.navigate('Login');
-    } catch (error) {
-      console.error('Registration error:', error);
-      Alert.alert('Registration failed', error.response?.data || 'Please try again.');
+const uploadProfileImage = async (userId) => {
+  if (!image) {
+    console.warn("No image selected. Skipping upload.");
+    return;
+  }
+
+  const fileName = `${uuidv4()}.jpg`;
+  const formData = new FormData();
+
+  formData.append("file", {
+    uri: image.uri,  // Ensure image.uri exists
+    type: image.type || "image/jpeg",
+    name: image.fileName || fileName,
+  });
+
+  formData.append("userId", userId);
+
+  try {
+    console.log("Uploading image with FormData:", formData);
+    
+    const response = await api.post("/auth/uploadProfileImage", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    console.log("Image upload successful:", response.data);
+  } catch (error) {
+    console.error("Image upload failed:", error?.response?.data || error);
+  }
+};
+
+
+
+ const handleRegister = async () => {
+  console.log("Starting registration...");
+
+  try {
+    console.log("Sending request with:", {
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      gender,
+      weight,
+      height,
+      birthdate,
+    });
+
+    const response = await api.post("/auth/register", {
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      gender,
+      weight,
+      height,
+      birthdate,
+    });
+
+    console.log("Register API Response:", response.data);
+
+    if (response?.status === 200 && response?.data?.userId) {
+      console.log("Uploading image...");
+      await uploadProfileImage(response.data.userId);
     }
-  };
 
-   const [image, setImage] = useState(null);
+    console.log("Registration complete!");
+    Alert.alert("Registration successful", "You can now log in.");
+    navigation.navigate("Login");
+  } catch (error) {
+    console.error("Registration error:", error?.response?.data || error);
+    Alert.alert("Registration failed", error?.response?.data?.message || "Please try again.");
+  }
+};
+
+
+
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
+         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+         allowsEditing: true,
+         aspect: [4, 3],
+         quality: 0.5,
+         base64: true
+       });
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setImage(result.assets[0]);
     }
   };
  
@@ -105,7 +162,7 @@ const RegisterScreen = ({ navigation }) => {
             <TouchableOpacity onPress={pickImage}>
         <View style={styles.imageContainer}>
           {image ? (
-            <Image source={{ uri: image }} style={styles.profileImage} />
+            <Image source={{ uri: 'data:image/jpeg;base64,' + image.base64 }} style={styles.profileImage} />
           ) : (
             <Text style={styles.imagePlaceholder}>Select Image</Text>
           )}

@@ -6,7 +6,8 @@ import {
   Image,
   Dimensions,
   ScrollView,
-  Tou
+   TouchableOpacity,
+   ActivityIndicator
 } from "react-native";
 import {
   Avatar,
@@ -16,6 +17,7 @@ import {
   IconButton,
   Surface,
   Button,
+ 
 } from "react-native-paper";
 import { Icon } from "react-native-elements";
 import api from "../axiosInstance";
@@ -25,16 +27,22 @@ import { formatDateTime } from "../utils/dateUtils";
 import CommentModal from "../components/CommentModal";
 import RunPostCard from "../components/RunPostCard";
 import { useNavigation } from '@react-navigation/native';
-
+import Colors from "../constants/colors";
 
 const ProfileScreen = ({ route }) => {
   const { userId } = route.params;
+
  
   const [user, setUser] = useState(null);
   const [runs, setRuns] = useState([]);
     const [likes, setLikes] = useState({});
     const [comments, setComments] = useState({});
     const [commentText, setCommentText] = useState("");
+const [currentUserId, setCurrentUserId] = useState(null);
+const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(1);
+   const [runsCount, setRunsCount] = useState(0);
+   const [loading, setLoading] = useState(true);
 
    
    const showModal = (run) => {
@@ -47,14 +55,30 @@ const ProfileScreen = ({ route }) => {
   };
 
   useEffect(() => {
+  const fetchCurrentUser = async () => {
+    try {
+      const currentUser = await AsyncStorage.getItem('userId');
+      if (currentUser) {
+        
+        setCurrentUserId(currentUser);
+      }
+    } catch (error) {
+      console.error("Failed to fetch current user:", error);
+    }
+  };
+   fetchCurrentUser();
+}, []);
+
+  useEffect(() => {
     const fetchUserData = async () => {
       try {
         if (userId) {
           console.log("Fetching user data for userId:", userId);
           const userResponse = await api.get(`/users/${userId}`);
           setUser(userResponse.data);
+          setLoading(false);
+          
           console.log("User data:", userResponse.data);
-
         
         }
       } catch (error) {
@@ -62,23 +86,26 @@ const ProfileScreen = ({ route }) => {
         if (error.response) {
           console.error("Error response data:", error.response.data);
         }
+        setLoading(false);
       }
     };
-const fetchUserRunData = async () => {
-      try {
+
+    
+const fetchUserRunData = async (page = 1, limit = 10) => {
+      console.log(`Fetching data for page: ${page}`);
+  try {
         const token = await AsyncStorage.getItem('token');
         if (userId) {
-          
-
-          const runsResponse = await api.get(`/runs/userRuns/${userId}`, {
+          const runsResponse = await api.get(`/runs/userRuns/${userId}?page=${page}&limit=10`, {
   headers: {
     Authorization: `Bearer ${token}`, 
   },
 });
 
-          setRuns(runsResponse.data);
-           console.log("jj",runs);
-          console.log("User runs:", runsResponse.data);
+          setRuns(runsResponse.data.userRunsWithImages);
+          setRunsCount(runsResponse.data.count);
+          
+        ;
         }
       } catch (error) {
         console.error("Failed to fetch run data:", error);
@@ -88,10 +115,11 @@ const fetchUserRunData = async () => {
       }
     };
     fetchUserData();
-    fetchUserRunData();
-  }, [userId]);
+    fetchUserRunData(page);
+  }, [userId, page]);
 
   
+
 
  const handleLike = async (id) => {
   try {
@@ -115,7 +143,23 @@ const fetchUserRunData = async () => {
 };
 
 
+function getPageOptions() {
+  let pageCount = getPageCount();
+  let options = [];
 
+  for (let i = 1; i <= pageCount; i++) {
+    options.push({label: i.toString(), value: i});
+  }
+
+  return options;
+}
+
+function getPageCount() {
+  var hasRemaining = (runsCount ?? 0) % limit !== 0;
+  var pageCount = (runsCount ?? 0) / limit;
+
+  return hasRemaining ? pageCount + 1 : pageCount;
+} 
 const handleCommentSubmit = async () => {
   if (!commentText.trim()) return;
 
@@ -135,23 +179,26 @@ const handleCommentSubmit = async () => {
       [selectedRun.id]: [...(prev[selectedRun.id] || []), { text: commentText }],
     }));
 
-    setCommentText(""); // Clear input after posting
+    setCommentText(""); 
   } catch (error) {
     console.error("Error adding comment:", error);
   }
 };
 
 
- const renderRun = ({ item }) => (
-  <RunPostCard
-    item={item}
-    onLike={handleLike}
-   onComment={showModal}
-    likes={likes}
-   comments={comments}
-    navigation={navigation}
-  />
-);
+ const renderRun = ({ item }) => {
+  console.log(item);
+    return (
+    <RunPostCard
+      item={item}
+      onLike={handleLike}
+      onComment={showModal}
+      likes={likes}
+      comments={comments}
+      navigation={navigation}
+    />
+  );
+ };
   
       const navigation = useNavigation();
       
@@ -159,18 +206,33 @@ const handleCommentSubmit = async () => {
         navigation.navigate("UpdateUserDataScreen", { userId }); 
       };
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading runs...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Surface style={styles.profileHeader}>
         <View style={styles.profileContent}>
-          <Avatar.Image
-            size={100}
-            source={{ uri: "https://thumbs.dreamstime.com/b/woman-athlete-running-avatar-character-woman-athlete-running-avatar-character-er-vector-illustration-design-130234721.jpg" }}
-          />
+     {user?.image ? (
+    <Avatar.Image
+      size={50}
+      source={{ uri: `data:image/jpeg;base64,${user.image}` }}
+    />
+  ) : (
+    <Avatar.Icon size={50} icon="account" />
+  )}
           <View style={styles.profileDetails}>
             <Text variant="headlineMedium" style={styles.profileName}>
-              {user ? user.userName : "Loading..."}
+              { `${user?.firstName} ${user?.lastName}` }
             </Text>
+            <Text> {user?.username}  </Text>
+
             <Text variant="bodyLarge">{runs.length} Runs</Text>
             <View style={styles.followStats}>
               <View style={styles.statItem}>
@@ -186,21 +248,58 @@ const handleCommentSubmit = async () => {
                 <Text variant="labelMedium">Following</Text>
               </View>
             </View>
-            <Button mode="contained-tonal" onPress={() => navigation.navigate('UpdateUserDataScreen', { userId: userId })} style={styles.editButton}>
-              Edit Profile
-            </Button>
+            {currentUserId === userId ? (
+  <Button
+    mode="contained-tonal"
+    onPress={() => navigation.navigate('UpdateUserDataScreen', { userId })}
+    style={styles.editButton}
+  >
+    Edit Profile
+  </Button>
+) : (
+  <Button
+    mode="contained"
+    onPress={() => console.log("Follow user")}
+    style={styles.followButton}
+  >
+    Follow
+  </Button>
+)}
+        
           </View>
         </View>
       </Surface>
 
       <Divider style={styles.profileDivider} />
+<View style={styles.rowContainer}>
+  <TouchableOpacity
+    style={[styles.pageButton, page === 1 && styles.disabledButton]}
+    onPress={() => setPage((prevPage) => Math.max(prevPage - 1, 1))}
+    disabled={page === 1}
+  >
+  <Icon name="arrow-back" size={24} color="#fff" />
+    </TouchableOpacity>
 
+  <Text style={styles.pageIndicator}>Page {page}</Text>
+
+  <TouchableOpacity
+    style={[
+      styles.pageButton,
+      page >= getPageCount() && styles.disabledButton
+    ]}
+    onPress={() => setPage((prevPage) => prevPage + 1)}
+    disabled={page >= getPageCount()}
+  >
+    <Icon name="arrow-forward" size={24} color="#fff" />
+  </TouchableOpacity>
+</View>
       <FlatList
         data={runs}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderRun}
         contentContainerStyle={styles.list}
       />
+    
     </View>
   );
 };
@@ -267,5 +366,36 @@ const styles = StyleSheet.create({
   iconTextContainer: { flexDirection: "row", alignItems: "center" },
   likeCount: { marginLeft: 5 },
   map: { width: "100%", height: 200, marginBottom: 20, borderRadius: 8 },
+    paginationContainer: {
+  flexDirection: "row",
+  justifyContent: "center",
+  alignItems: "center",
+  marginVertical: 10,
+},
+
+  pageButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.plansGreen,
+    borderRadius: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  pageButtonText: {
+    color: "#fff",
+  },
+  pageIndicator: {
+    marginHorizontal: 10,
+  },
+    rowContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 10,
+  },
 });
 export default ProfileScreen;

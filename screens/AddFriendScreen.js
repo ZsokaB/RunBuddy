@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, FlatList, StyleSheet, ActivityIndicator } from "react-native";
-import { TextInput, IconButton, Text, Card, Button, Snackbar } from "react-native-paper";
+import { View, FlatList, StyleSheet, ActivityIndicator, Image } from "react-native";
+import { TextInput, IconButton, Text, Card, Button, Snackbar, Avatar } from "react-native-paper";
 import api from "../axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -131,6 +131,15 @@ const AddFriendPage = () => {
             <Card style={styles.resultCard}>
               <Card.Content>
                 <View style={styles.resultHeader}>
+                      {item?.image ? (
+                     <Avatar.Image
+                       size={50}
+                       source={{ uri: `data:image/jpeg;base64,${item.image}` }}
+                     />
+                   ) : (
+                     <Avatar.Icon size={50} icon="account" />
+                   )}
+                  
                   <Text style={styles.username}>{item.userName}</Text>
                   <IconButton
                     icon="account-plus"
@@ -200,9 +209,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
   },
-  emailText: {
-    fontSize: 14,
-    color: "#777",
+    profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  defaultImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#ccc",
+    marginRight: 10,
   },
 });
 

@@ -8,6 +8,7 @@ import haversine from "haversine";
 import { useNavigation } from "@react-navigation/native";
 import { calculatePace, formatPace } from "../utils/paceUtils";
 import api from "../axiosInstance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Plan from "../data/plans";
 import Colors from "../constants/colors";
@@ -39,7 +40,7 @@ export default function RunScreen() {
   const [totalDuration, setTotalDuration] = useState(0);
   const [pace, setPace] = useState(null);
 
-      const [distanceCovered, setDistanceCovered] = useState(0); 
+    const [distanceCovered, setDistanceCovered] = useState(0); 
     const [kilometerPaces, setKilometerPaces] = useState([]); 
     const [startTime, setStartTime] = useState(new Date().getTime());
   
@@ -47,6 +48,65 @@ export default function RunScreen() {
   const [activeTab, setActiveTab] = useState("Guided Run");
 
    const navigation = useNavigation();
+
+    useEffect(() => {
+    
+    const fetchNextRun = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+      console.error("Token is missing. Please log in.");
+      return;
+    }
+
+        const response = await api.get("/runs/getNextRun", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }); 
+        setWorkout({week : response.data.week, day: response.data.day});
+         console.log("nextrun", workout);
+      
+      } catch (error) {
+        console.error("Failed to fetch next run:", error);
+      }
+      
+    };
+    
+    fetchNextRun();
+   
+  }, []);
+
+useEffect(() => {
+  const addWorkoutData = () => {
+    if (!workout || !workout.week || !workout.day) return; // Ensure workout has values
+
+    const { week, day } = workout;
+    const weekData = Plan.find((w) => w.week === week);
+    
+    if (!weekData) {
+      console.error(`Week ${week} not found in Plan`);
+      return;
+    }
+
+    const dayData = weekData.days.find((d) => d.day === day);
+    
+    if (!dayData) {
+      console.error(`Day ${day} not found in Week ${week}`);
+      return;
+    }
+
+    setWorkoutData(dayData);
+    if (dayData.routine && dayData.routine.length > 0) {
+        setCurrentActivityTime(dayData.routine[0].duration || 0);
+      }
+  };
+
+  addWorkoutData();
+}, [workout]); 
+
+ 
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const toRadian = (angle) => (Math.PI / 180) * angle;
@@ -68,6 +128,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
     return finalDistance;
   };
+
 useEffect(() => {
   const getPermissionAndStartTracking = async () => {
     try {
@@ -152,9 +213,7 @@ useEffect(() => {
   };
 }, [isRunning, previousLocation]);
 
-  useEffect(() => {
-    findNextWorkout();
-  }, []);
+ 
 
    const trackDistance = (currentDistance) => {
   console.log("Tracking distance:", currentDistance, distanceCovered);
@@ -196,37 +255,7 @@ useEffect(() => {
   }, [currentActivityTime]);
 
 
-  const findNextWorkout = () => {
-    let nextWorkout = null;
-    let weekNumber = null;
 
-    Plan.forEach((week) => {
-      week.days.forEach((day, dayIndex) => {
-        if (day.done) {
-          if (dayIndex === week.days.length - 1) {
-            nextWorkout = week.days[0];
-            weekNumber = week.weekValue + 1;
-            nextWorkout.week = weekNumber;
-          } else {
-            nextWorkout = week.days[dayIndex + 1] ?? week.days[dayIndex];
-            nextWorkout.week = week.week;
-          }
-        }
-      });
-    });
-
-    if (nextWorkout) {
-      setWorkout({ week: nextWorkout.week, day: nextWorkout.day });
-      setWorkoutData(nextWorkout);
-      if (nextWorkout.routine && nextWorkout.routine.length > 0) {
-        setCurrentActivityTime(nextWorkout.routine[0].duration || 0);
-      }
-    } else {
-      setWorkoutData({
-        routine: [{ activity: "None", duration: 0 }],
-      });
-    }
-  };
 
   const formatDuration = (durationInSeconds) => {
     if (!durationInSeconds) return "00:00:00";
@@ -265,7 +294,6 @@ useEffect(() => {
   setTotalDuration(0);
    setCurrentActivityIndex(0);
   setCurrentActivityTime(0);
-  findNextWorkout();
   setRunTimer(null);
   setIsRunning(false);
   setIsPaused(false);

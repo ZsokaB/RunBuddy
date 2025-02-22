@@ -183,7 +183,7 @@ const fetchRecentRuns = async (page = 1, limit = 10) => {
   try {
    
     const token = await AsyncStorage.getItem('token'); // Ensure 'authToken' matches the key you're using
-
+  console.log(token);
     if (!token) {
       console.error("Token is missing. Please log in.");
       return;
@@ -673,8 +673,8 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
   },
   runTypeText: {
-    color: "gray",  // You can customize the color or font size
-    fontSize: 14,  // Adjust size as needed
+    color: "gray",  
+    fontSize: 14,  
     paddingHorizontal: 5,
     paddingRight: 10,
   },
