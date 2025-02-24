@@ -1,8 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { View, FlatList, StyleSheet, ActivityIndicator, Image } from "react-native";
-import { TextInput, IconButton, Text, Card, Button, Snackbar, Avatar } from "react-native-paper";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+} from "react-native";
+import {
+  TextInput,
+  IconButton,
+  Text,
+  Card,
+  Button,
+  Snackbar,
+  Avatar,
+} from "react-native-paper";
 import api from "../axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "../context/AuthContext";
+import { config } from "../utils/config";
 
 const AddFriendPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,6 +29,7 @@ const AddFriendPage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const [currentUserId, setCurrentUserId] = useState(null);
+  const { token } = useAuth();
 
   // Fetch current user ID
   useEffect(() => {
@@ -32,6 +49,9 @@ const AddFriendPage = () => {
     fetchUserId();
   }, []);
 
+  const streamProfileImage = (userId) =>
+    `${config.baseURL}/users/StreamProfileImage/${userId}?access_token=${token}`;
+
   // Search users based on the query
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -43,7 +63,14 @@ const AddFriendPage = () => {
     setLoading(true);
 
     try {
-      const response = await api.get(`/users/search?query=${encodeURIComponent(searchQuery)}`);
+      const response = await api.get(
+        `/users/search?query=${encodeURIComponent(searchQuery)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       console.log("Search Results:", response.data);
       setResults(response.data);
     } catch (err) {
@@ -75,16 +102,16 @@ const AddFriendPage = () => {
     setLoading(true);
 
     let data = JSON.stringify({
-        FollowingUserId: currentUserId,
-        FollowedUserId: followeeId
-    })
-    try {
-     const response = await api.post('/userconnections/follow', data, {
-        headers: {
-            'Content-Type': 'application/json',
-        }
+      FollowingUserId: currentUserId,
+      FollowedUserId: followeeId,
     });
-        
+    try {
+      const response = await api.post("/userconnections/follow", data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
       console.log("API Response:", response.data);
 
       if (response.status === 200) {
@@ -94,7 +121,9 @@ const AddFriendPage = () => {
       }
     } catch (error) {
       console.error("Follow API Error:", error.response?.data || error.message);
-      setSnackbarMessage(error.response?.data?.message || "Error occurred while following.");
+      setSnackbarMessage(
+        error.response?.data?.message || "Error occurred while following."
+      );
     } finally {
       setLoading(false);
       setSnackbarVisible(true);
@@ -120,7 +149,9 @@ const AddFriendPage = () => {
       >
         Search
       </Button>
-      {loading && <ActivityIndicator size="large" color="#6200ea" style={styles.loader} />}
+      {loading && (
+        <ActivityIndicator size="large" color="#6200ea" style={styles.loader} />
+      )}
       {error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : (
@@ -131,15 +162,15 @@ const AddFriendPage = () => {
             <Card style={styles.resultCard}>
               <Card.Content>
                 <View style={styles.resultHeader}>
-                      {item?.image ? (
-                     <Avatar.Image
-                       size={50}
-                       source={{ uri: `data:image/jpeg;base64,${item.image}` }}
-                     />
-                   ) : (
-                     <Avatar.Icon size={50} icon="account" />
-                   )}
-                  
+                  {item?.profileImagePath != null ? (
+                    <Avatar.Image
+                      size={50}
+                      source={{ uri: `${streamProfileImage(item.id)}` }}
+                    />
+                  ) : (
+                    <Avatar.Icon size={50} icon="account" />
+                  )}
+
                   <Text style={styles.username}>{item.userName}</Text>
                   <IconButton
                     icon="account-plus"
@@ -149,8 +180,9 @@ const AddFriendPage = () => {
                     style={styles.followIcon}
                   />
                 </View>
-                <Text style={styles.nameText}>{`${item.firstName} ${item.lastName}`}</Text>
-                
+                <Text
+                  style={styles.nameText}
+                >{`${item.firstName} ${item.lastName}`}</Text>
               </Card.Content>
             </Card>
           )}
@@ -209,7 +241,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
   },
-    profileImage: {
+  profileImage: {
     width: 40,
     height: 40,
     borderRadius: 20,

@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
   ScrollView,
   TouchableOpacity,
-  Image, ActivityIndicator,
+  Image,
+  ActivityIndicator,
   Modal,
 } from "react-native";
 import { Text, Divider, Card } from "react-native-paper";
 import { Icon } from "react-native-elements";
 import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import api from "../axiosInstance";
 import { Dropdown } from "react-native-paper-dropdown";
-import { Picker } from '@react-native-picker/picker';
+import { Picker } from "@react-native-picker/picker";
 import Colors from "../constants/colors";
+import { useAuth } from "../context/AuthContext";
+import { config } from "../utils/config";
 
 export default function StatisticsScreen() {
   const [activeTab, setActiveTab] = useState("Weekly");
@@ -24,195 +27,196 @@ export default function StatisticsScreen() {
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
-   const [statsData, setStatsData] = useState(null);
+  const [statsData, setStatsData] = useState(null);
 
-    const [modalVisible, setModalVisible] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('February');
-  const [selectedYear, setSelectedYear] = useState('2025');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("February");
+  const [selectedYear, setSelectedYear] = useState("2025");
 
   const [selectedWeek, setSelectedWeek] = useState("");
   const [isFirstCall, setIsFirstCall] = useState(true);
+  const { token } = useAuth();
 
+  useEffect(() => {
+    const initialize = async () => {
+      await handleSelectButton();
+    };
 
- 
-useEffect(() => {
-  const initialize = async () => {
-    await handleSelectButton();  
-  };
+    if (isFirstCall && selectedWeek) {
+      initialize();
+      setIsFirstCall(false);
+    }
+  }, [selectedWeek]);
 
- 
- 
- 
-  if (isFirstCall && selectedWeek) {
-    initialize();
-    setIsFirstCall(false);
+  useEffect(() => {
+    const setInitialWeek = async () => {
+      const week = getCurrentWeek();
+      setSelectedWeek(week);
+    };
+    setInitialWeek();
+  }, []);
+
+  function formatWeekRange(startOfWeek, endOfWeek) {
+    const dayOptions = { day: "numeric" };
+    const monthYearOptions = { month: "long", year: "numeric" };
+
+    const startDay = startOfWeek.toLocaleDateString("en-GB", dayOptions);
+    const endDay = endOfWeek.toLocaleDateString("en-GB", dayOptions);
+    const startMonthYear = startOfWeek.toLocaleDateString(
+      "en-GB",
+      monthYearOptions
+    );
+    const endMonthYear = endOfWeek.toLocaleDateString(
+      "en-GB",
+      monthYearOptions
+    );
+
+    if (startMonthYear === endMonthYear) {
+      return `${startDay}–${endDay} ${startMonthYear}`;
+    }
+
+    return `${startDay} ${startMonthYear} – ${endDay} ${endMonthYear}`;
   }
-}, [selectedWeek]);
 
-useEffect(() => {
-  const setInitialWeek = async () => {
-    const week = getCurrentWeek();
-    setSelectedWeek(week);
-  }
-  setInitialWeek();
-}, [])
+  function getCurrentWeek() {
+    const currentDate = new Date();
+    const day = currentDate.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const startOfWeek = new Date(
+      currentDate.setDate(currentDate.getDate() + diff)
+    );
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
 
+    const formattedDate = startOfWeek.toISOString().split("T")[0];
 
-function formatWeekRange(startOfWeek, endOfWeek) {
-  const dayOptions = { day: "numeric" };
-  const monthYearOptions = { month: "long", year: "numeric" };
-
-  const startDay = startOfWeek.toLocaleDateString("en-GB", dayOptions);
-  const endDay = endOfWeek.toLocaleDateString("en-GB", dayOptions);
-  const startMonthYear = startOfWeek.toLocaleDateString("en-GB", monthYearOptions);
-  const endMonthYear = endOfWeek.toLocaleDateString("en-GB", monthYearOptions);
-
-  if (startMonthYear === endMonthYear) {
-    return `${startDay}–${endDay} ${startMonthYear}`;
-  }
-
-  return `${startDay} ${startMonthYear} – ${endDay} ${endMonthYear}`;
-}
-
-function getCurrentWeek() {
-  const currentDate = new Date();
-  const day = currentDate.getDay();
-  const diff = (day === 0 ? -6 : 1) - day; 
-  const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() + diff));
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6); 
-
-  const formattedDate = startOfWeek.toISOString().split('T')[0];
-
-  return {
-    label: formatWeekRange(startOfWeek, endOfWeek),
-    value: formattedDate,
-  };
-}
-
-function generateWeeks() {
-  const weeks = [];
-  let date = new Date();
-  const day = date.getDay();
-  const diff = (day === 0 ? -6 : 1) - day; 
-  date.setDate(date.getDate() + diff);
-
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(date.getFullYear() - 1);
-
-  while (date >= oneYearAgo) {
-    const startOfWeek = new Date(date);
-    const endOfWeek = new Date(date);
-    endOfWeek.setDate(endOfWeek.getDate() + 6); 
-
-    const formattedDate = startOfWeek.toISOString().split('T')[0];
-
-    weeks.push({
+    return {
       label: formatWeekRange(startOfWeek, endOfWeek),
       value: formattedDate,
-    });
-
-    date.setDate(date.getDate() - 7);
+    };
   }
 
-  return weeks;
-}
+  function generateWeeks() {
+    const weeks = [];
+    let date = new Date();
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    date.setDate(date.getDate() + diff);
 
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(date.getFullYear() - 1);
 
-const weeks = generateWeeks(new Date().getFullYear());
+    while (date >= oneYearAgo) {
+      const startOfWeek = new Date(date);
+      const endOfWeek = new Date(date);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
 
+      const formattedDate = startOfWeek.toISOString().split("T")[0];
 
+      weeks.push({
+        label: formatWeekRange(startOfWeek, endOfWeek),
+        value: formattedDate,
+      });
 
-   
+      date.setDate(date.getDate() - 7);
+    }
+
+    return weeks;
+  }
+
+  const weeks = generateWeeks(new Date().getFullYear());
 
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const years = Array.from({ length: 10 }, (_, i) => `${2020 + i}`);
 
-const displayText =
-  activeTab === "Weekly"
-    ? selectedWeek && selectedWeek.label
-      ? `${selectedWeek.label}`
-      : "Select Week"
-    : activeTab === "Monthly"
-    ? `${selectedMonth} ${selectedYear}`
-    : activeTab === "Yearly"
-    ? `${selectedYear}`
-    : "";
-
-
-
+  const displayText =
+    activeTab === "Weekly"
+      ? selectedWeek && selectedWeek.label
+        ? `${selectedWeek.label}`
+        : "Select Week"
+      : activeTab === "Monthly"
+      ? `${selectedMonth} ${selectedYear}`
+      : activeTab === "Yearly"
+      ? `${selectedYear}`
+      : "";
 
   const navigation = useNavigation();
 
   const LIMIT_OPTIONS = [
-  { label: '10', value: 10 },
-  { label: '25', value: 25 },
-  { label: '50', value: 50 },
-];
+    { label: "10", value: 10 },
+    { label: "25", value: 25 },
+    { label: "50", value: 50 },
+  ];
 
-function formatDate(dateString) {
-  const date = new Date(dateString); 
-  return date.toISOString().split("T")[0]; 
-}
-
-function getPageOptions() {
-  let pageCount = getPageCount();
-  let options = [];
-
-  for (let i = 1; i <= pageCount; i++) {
-    options.push({label: i.toString(), value: i});
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toISOString().split("T")[0];
   }
 
-  return options;
-}
+  function getPageOptions() {
+    let pageCount = getPageCount();
+    let options = [];
 
-function getPageCount() {
-  var hasRemaining = (runsCount ?? 0) % limit !== 0;
-  var pageCount = (runsCount ?? 0) / limit;
-
-  return hasRemaining ? pageCount + 1 : pageCount;
-} 
-
-
- 
-const fetchRecentRuns = async (page = 1, limit = 10) => {
-  try {
-   
-    const token = await AsyncStorage.getItem('token'); // Ensure 'authToken' matches the key you're using
-  console.log(token);
-    if (!token) {
-      console.error("Token is missing. Please log in.");
-      return;
+    for (let i = 1; i <= pageCount; i++) {
+      options.push({ label: i.toString(), value: i });
     }
 
-    const response = await api.get(`/runs/recent?lowQuality=true&page=${page}&limit=${limit}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-   
-    setRecentRuns(response.data.recentRunsWithImgs);
-    setRunsCount(response.data.count);
-  } catch (error) {
-    if (error.response && error.response.status === 401) {
-      console.error("Unauthorized: Please check the token or log in again.");
-    } else {
-      console.error("Failed to fetch recent runs:", error);
-    }
-  }  finally {
-        setLoading(false);
+    return options;
+  }
+
+  function getPageCount() {
+    var hasRemaining = (runsCount ?? 0) % limit !== 0;
+    var pageCount = (runsCount ?? 0) / limit;
+
+    return hasRemaining ? pageCount + 1 : pageCount;
+  }
+
+  const streamImageForRun = (runId) =>
+    `${config.baseURL}/runs/StreamImageForRun/${runId}?access_token=${token}`;
+
+  const fetchRecentRuns = async (page = 1, limit = 10) => {
+    try {
+      const response = await api.get(
+        `/runs/recent?lowQuality=true&page=${page}&limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setRecentRuns(response.data.recentRunsWithImgs);
+      setRunsCount(response.data.count);
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        console.error("Unauthorized: Please check the token or log in again.");
+      } else {
+        console.error("Failed to fetch recent runs:", error);
       }
-};
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchRecentRuns(page, limit);
   }, [page, limit]);
 
-    if (loading) {
+  if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -221,110 +225,92 @@ const fetchRecentRuns = async (page = 1, limit = 10) => {
     );
   }
   const handleSelectButton2 = async () => {
-  console.log('Button clicked');  // Add this line
-  try {
-    const token = await AsyncStorage.getItem('token');
-    if (!token) {
-      console.error("Token is missing. Please log in.");
-      return;
+    console.log("Button clicked"); // Add this line
+    try {
+      let period = "month";
+      let referenceDate = "2025-01-01";
+
+      console.log("Reference Date:", referenceDate); // Check this log
+      console.log("Selected Month:", selectedMonth);
+
+      const response = await api.get(
+        `/runs/getstats?period=${period}&referenceDate=${referenceDate}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("API response:", response.data);
+    } catch (error) {
+      console.error("Error during API call:", error);
+    } finally {
+      setModalVisible(false);
     }
+  };
 
-    let period = "month";
-    let referenceDate = "2025-01-01";
+  async function handleSelectButton() {
+    try {
+      const monthMap = {
+        January: "01",
+        February: "02",
+        March: "03",
+        April: "04",
+        May: "05",
+        June: "06",
+        July: "07",
+        August: "08",
+        September: "09",
+        October: "10",
+        November: "11",
+        December: "12",
+      };
 
-    console.log('Reference Date:', referenceDate);  // Check this log
-    console.log('Selected Month:', selectedMonth);
+      let period = "";
+      let referenceDate = "";
 
-    const response = await api.get(`/runs/getstats?period=${period}&referenceDate=${referenceDate}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      console.log("Active tab: ");
+      console.log(activeTab);
+      console.log("Selected week value: ");
+      console.log(selectedWeek.value);
 
-    console.log('API response:', response.data);
-  } catch (error) {
-    console.error("Error during API call:", error);
-  } finally {
-    setModalVisible(false);
-  }
-};
+      if (activeTab === "Weekly" && selectedWeek) {
+        period = "week";
+        referenceDate = selectedWeek.value;
+      } else if (activeTab === "Monthly" && selectedMonth && selectedYear) {
+        period = "month";
+        const monthNumber = monthMap[selectedMonth];
+        console.log(monthNumber);
+        referenceDate = `${selectedYear}-${monthNumber}-01`;
+      } else if (activeTab === "Yearly" && selectedYear) {
+        period = "year";
+        referenceDate = `${selectedYear}-01-01`;
+      }
 
+      console.log(referenceDate);
+      console.log(selectedMonth);
 
+      if (!period || !referenceDate) {
+        console.error("Invalid selection.");
+        return;
+      }
 
-async function handleSelectButton() {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    
-    if (!token) {
-      console.error("Token is missing. Please log in.");
-      return;
-    }
-
-const monthMap = {
-      January: "01",
-      February: "02",
-      March: "03",
-      April: "04",
-      May: "05",
-      June: "06",
-      July: "07",
-      August: "08",
-      September: "09",
-      October: "10",
-      November: "11",
-      December: "12",
-    };
-
-   
-    let period = "";
-    let referenceDate = "";
-
-    console.log("Active tab: ");
-    console.log(activeTab);
-    console.log("Selected week value: ");
-    console.log(selectedWeek.value)
-
-   
-    if (activeTab === "Weekly" && selectedWeek) {
-      period = "week";
-       referenceDate = selectedWeek.value; 
-    } else if (activeTab === "Monthly" && selectedMonth && selectedYear) {
-      period = "month";
-      const monthNumber = monthMap[selectedMonth];
-         console.log(monthNumber);
-      referenceDate = `${selectedYear}-${monthNumber}-01`; 
-    } else if (activeTab === "Yearly" && selectedYear) {
-      period = "year";
-      referenceDate = `${selectedYear}-01-01`;  
-    }
-
-  console.log(referenceDate);
-  console.log(selectedMonth);
-
-    if (!period || !referenceDate) {
-      console.error("Invalid selection.");
-      return;
-    }
-
- 
-  const response = await api.get(`/runs/getstats?period=${period}&referenceDate=${referenceDate}`, {
-   
-  
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+      const response = await api.get(
+        `/runs/getstats?period=${period}&referenceDate=${referenceDate}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setStatsData(response.data);
 
-    console.log('API response:', response.data);
-  
-
-  } catch (error) {
-    console.error("Error during API call:", error);
-  } finally {
-    setModalVisible(false);  
+      console.log("API response:", response.data);
+    } catch (error) {
+      console.error("Error during API call:", error);
+    } finally {
+      setModalVisible(false);
+    }
   }
-};
-
-
 
   return (
     <ScrollView style={styles.container}>
@@ -346,113 +332,107 @@ const monthMap = {
             </Text>
           </TouchableOpacity>
         ))}
-
       </View>
- 
-     <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.dropdown}>
-<Text style={styles.dropdownText}>
-  {displayText}
-</Text>      </TouchableOpacity>
 
-    <Modal visible={modalVisible} transparent animationType="slide">
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.dropdown}
+      >
+        <Text style={styles.dropdownText}>{displayText}</Text>{" "}
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.pickerContainer}>
-            {activeTab === "Weekly" && (
-  <Picker
-  selectedValue={selectedWeek ? selectedWeek.label : ''}
-  style={styles.picker}
-  itemStyle={styles.pickerItem}
-  onValueChange={(itemValue) => {
-    // Ensure weeks array is defined and not empty
-    if (weeks && weeks.length > 0) {
-      const selectedWeekObj = weeks.find((week) => week.label === itemValue);
-      if (selectedWeekObj) {
-        setSelectedWeek(selectedWeekObj);
-      } else {
-        console.error("Week not found");
-      }
-    } else {
-      console.error("Weeks array is empty or not initialized");
-    }
-  }}
->
-  {weeks.map((week) => (
-    <Picker.Item key={week.value} label={week.label} value={week.label} />
-  ))}
-</Picker>
-
+            {!!(activeTab === "Weekly") && (
+              <Picker
+                selectedValue={selectedWeek ? selectedWeek.label : ""}
+                style={styles.picker}
+                itemStyle={styles.pickerItem}
+                onValueChange={(itemValue) => {
+                  // Ensure weeks array is defined and not empty
+                  if (weeks && weeks.length > 0) {
+                    const selectedWeekObj = weeks.find(
+                      (week) => week.label === itemValue
+                    );
+                    if (selectedWeekObj) {
+                      setSelectedWeek(selectedWeekObj);
+                    } else {
+                      console.error("Week not found");
+                    }
+                  } else {
+                    console.error("Weeks array is empty or not initialized");
+                  }
+                }}
+              >
+                {weeks.map((week) => (
+                  <Picker.Item
+                    key={week.value}
+                    label={week.label}
+                    value={week.label}
+                  />
+                ))}
+              </Picker>
             )}
 
-          {(activeTab === "Monthly")  && (
-             <>
-            <Picker
-              selectedValue={selectedMonth}
-              style={styles.picker}
-                itemStyle={styles.pickerItem}
-              onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-            >
-              {months.map((month) => (
-                <Picker.Item key={month} label={month} value={month} />
-                
-              ))}
-            </Picker>
+            {!!(activeTab === "Monthly") && (
+              <>
+                <Picker
+                  selectedValue={selectedMonth}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                  onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+                >
+                  {months.map((month) => (
+                    <Picker.Item key={month} label={month} value={month} />
+                  ))}
+                </Picker>
 
-            <Picker
-              selectedValue={selectedYear}
-              style={styles.picker}
-                itemStyle={styles.pickerItem}
-              onValueChange={(itemValue) => setSelectedYear(itemValue)}
-            >
-              {years.map((year) => (
-                <Picker.Item key={year} label={year} value={year} />
-              ))}
-            </Picker> 
-            </>
-
-          )}
-           {( activeTab === "Yearly" )  && (
-             <>
-           
-
-            <Picker
-              selectedValue={selectedYear}
-              style={styles.picker}
-                itemStyle={styles.pickerItem}
-              onValueChange={(itemValue) => setSelectedYear(itemValue)}
-            >
-              {years.map((year) => (
-                <Picker.Item key={year} label={year} value={year} />
-              ))}
-            </Picker> 
-            </>
-
-          )}
+                <Picker
+                  selectedValue={selectedYear}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                  onValueChange={(itemValue) => setSelectedYear(itemValue)}
+                >
+                  {years.map((year) => (
+                    <Picker.Item key={year} label={year} value={year} />
+                  ))}
+                </Picker>
+              </>
+            )}
+            {!!(activeTab === "Yearly") && (
+              <>
+                <Picker
+                  selectedValue={selectedYear}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                  onValueChange={(itemValue) => setSelectedYear(itemValue)}
+                >
+                  {years.map((year) => (
+                    <Picker.Item key={year} label={year} value={year} />
+                  ))}
+                </Picker>
+              </>
+            )}
           </View>
-          
 
           <TouchableOpacity
             style={styles.selectButton}
             onPress={handleSelectButton}
-          
           >
             <Text style={styles.selectButtonText}>Select</Text>
           </TouchableOpacity>
         </View>
       </Modal>
 
-      
-   
- 
-
       <Divider style={styles.divider} />
-    
 
       <View style={styles.routineItem}>
         <Icon name="map-marker-outline" type="material-community" size={30} />
         <View style={styles.textContainer}>
           <Text variant="titleLarge">{statsData?.totalDistance ?? 0} km</Text>
           <Text style={styles.metricLabel} variant="labelMedium">
-            Distance
+            {"Distance"}
           </Text>
         </View>
       </View>
@@ -463,7 +443,7 @@ const monthMap = {
             <View style={styles.textContainer}>
               <Text variant="titleLarge">{statsData?.totalDuration ?? 0}</Text>
               <Text style={styles.metricLabel} variant="labelMedium">
-                Duration
+                {"Duration"}
               </Text>
             </View>
           </View>
@@ -483,7 +463,7 @@ const monthMap = {
             <View style={styles.textContainer}>
               <Text variant="titleLarge">{statsData?.runCount ?? 0}</Text>
               <Text style={styles.metricLabel} variant="labelMedium">
-                Runs
+                {"Runs"}
               </Text>
             </View>
           </View>
@@ -492,111 +472,109 @@ const monthMap = {
             <View style={styles.textContainer}>
               <Text variant="titleLarge">{statsData?.totalCalories ?? 0}</Text>
               <Text style={styles.metricLabel} variant="labelMedium">
-                Calories
+                {"Calories"}
               </Text>
             </View>
           </View>
         </View>
       </View>
       <Divider style={styles.divider} />
-   
-          <Text variant="titleLarge" style={styles.titleText}>
-        Recent Runs
+
+      <Text variant="titleLarge" style={styles.titleText}>
+        {"Recent Runs"}
       </Text>
-       <View style={styles.rowContainer}>
-  <Dropdown
-    label="Limit"
-    placeholder="10"
-    options={LIMIT_OPTIONS}
-    value={limit}
-    onSelect={setLimit}
-    mode="outlined"
-    hideMenuHeader="true"
-    
-    style={styles.dropdownPagenation}
-  />
-  
- <Dropdown
-    label="Page"
-    placeholder="1"
-    options={getPageOptions()}
-    value={page}
-    onSelect={setPage}
-    mode="outlined"
-    hideMenuHeader="true"
-    style={styles.dropdownPagenation}
-  />
- 
-</View>
-<View style={styles.rowContainer}>
-  <TouchableOpacity
-    style={[styles.pageButton, page === 1 && styles.disabledButton]}
-    onPress={() => setPage((prevPage) => Math.max(prevPage - 1, 1))}
-    disabled={page === 1}
-  >
-  <Icon name="arrow-back" size={24} color="#fff" />
-    </TouchableOpacity>
+      <View style={styles.rowContainer}>
+        <Dropdown
+          label="Limit"
+          placeholder="10"
+          options={LIMIT_OPTIONS}
+          value={limit}
+          onSelect={setLimit}
+          mode="outlined"
+          hideMenuHeader="true"
+          style={styles.dropdownPagenation}
+        />
 
-  <Text style={styles.pageIndicator}>Page {page}</Text>
+        <Dropdown
+          label="Page"
+          placeholder="1"
+          options={getPageOptions()}
+          value={page}
+          onSelect={setPage}
+          mode="outlined"
+          hideMenuHeader="true"
+          style={styles.dropdownPagenation}
+        />
+      </View>
+      <View style={styles.rowContainer}>
+        <TouchableOpacity
+          style={[styles.pageButton, page === 1 && styles.disabledButton]}
+          onPress={() => setPage((prevPage) => Math.max(prevPage - 1, 1))}
+          disabled={page === 1}
+        >
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
 
-  <TouchableOpacity
-    style={[
-      styles.pageButton,
-      page >= getPageCount() && styles.disabledButton
-    ]}
-    onPress={() => setPage((prevPage) => prevPage + 1)}
-    disabled={page >= getPageCount()}
-  >
-    <Icon name="arrow-forward" size={24} color="#fff" />
-  </TouchableOpacity>
-</View>
+        <Text style={styles.pageIndicator}>Page {page}</Text>
+
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            page >= getPageCount() && styles.disabledButton,
+          ]}
+          onPress={() => setPage((prevPage) => prevPage + 1)}
+          disabled={page >= getPageCount()}
+        >
+          <Icon name="arrow-forward" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       {recentRuns.map((run, index) => (
         <TouchableOpacity
           key={index}
-          onPress={() => navigation.navigate('RunDetailsScreen', { runId: run.id })}
+          onPress={() =>
+            navigation.navigate("RunDetailsScreen", { runId: run.id })
+          }
         >
-        <Card key={index} style={styles.card}>
-          <Card.Content style={styles.cardContent}>
-            <View style={styles.rowContainer}>
-            <Image
-          source={{ uri: `data:image/jpeg;base64,${run.image}`}}
-          style={styles.image}
-          resizeMode="cover"
-        /> 
-              <View style={styles.textContainer}>
-                <View style={styles.cardHeader}>
-                  <Text variant="titleMedium" style={styles.dateText}>
-                    {formatDate(run.date)}
-                  </Text>
-                  <Text style={styles.runTypeText}>
-            {run.type} 
-          </Text>
-                </View>
-                <View style={styles.metricsContainer}>
-                  <View style={styles.metricItem}>
-                    <Text style={styles.metricTitle}>{run.duration}</Text>
-                    <Text style={styles.metricLabel} variant="labelMedium">
-                      Duration
+          <Card key={index} style={styles.card}>
+            <Card.Content style={styles.cardContent}>
+              <View style={styles.rowContainer}>
+                <Image
+                  source={{ uri: streamImageForRun(run.id) }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+                <View style={styles.textContainer}>
+                  <View style={styles.cardHeader}>
+                    <Text variant="titleMedium" style={styles.dateText}>
+                      {formatDate(run.date)}
                     </Text>
+                    <Text style={styles.runTypeText}>{run.type}</Text>
                   </View>
-                  <View style={styles.metricItem}>
-                    <Text style={styles.metricTitle}>{run.distance}</Text>
-                    <Text style={styles.metricLabel} variant="labelMedium">
-                      Distance
-                    </Text>
-                  </View>
-                  <View style={styles.metricItem}>
-                    <Text style={styles.metricTitle}>{run.pace}</Text>
-                    <Text style={styles.metricLabel} variant="labelMedium">
-                      Average Pace
-                    </Text>
+                  <View style={styles.metricsContainer}>
+                    <View style={styles.metricItem}>
+                      <Text style={styles.metricTitle}>{run.duration}</Text>
+                      <Text style={styles.metricLabel} variant="labelMedium">
+                        {"Duration"}
+                      </Text>
+                    </View>
+                    <View style={styles.metricItem}>
+                      <Text style={styles.metricTitle}>{run.distance}</Text>
+                      <Text style={styles.metricLabel} variant="labelMedium">
+                        Distance
+                      </Text>
+                    </View>
+                    <View style={styles.metricItem}>
+                      <Text style={styles.metricTitle}>{run.pace}</Text>
+                      <Text style={styles.metricLabel} variant="labelMedium">
+                        Average Pace
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
-          </Card.Content>
-        </Card>
+            </Card.Content>
+          </Card>
         </TouchableOpacity>
       ))}
     </ScrollView>
@@ -631,12 +609,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 10,
-      paddingHorizontal: 10,
+    paddingHorizontal: 10,
   },
 
   textContainer: {
     flexDirection: "column",
-     marginLeft: 10, 
+    marginLeft: 10,
   },
   divider: {
     width: "90%",
@@ -665,7 +643,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10,
-
   },
   dateText: {
     fontWeight: "bold",
@@ -673,8 +650,8 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
   },
   runTypeText: {
-    color: "gray",  
-    fontSize: 14,  
+    color: "gray",
+    fontSize: 14,
     paddingHorizontal: 5,
     paddingRight: 10,
   },
@@ -697,59 +674,58 @@ const styles = StyleSheet.create({
     paddingRight: 5,
   },
   dropdownPagenation: {
-    height: 5, 
+    height: 5,
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderRadius: 8,
-    alignItems: 'center',
-    minHeight: 30, 
+    alignItems: "center",
+    minHeight: 30,
     minWidth: 5,
   },
-   modalContainer: {
+  modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   pickerContainer: {
-    backgroundColor: 'white',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: "white",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-    dropdown: {
+  dropdown: {
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   dropdownText: {
     fontSize: 18,
   },
   picker: {
     flex: 1,
-    
   },
   selectButton: {
-    backgroundColor: 'black',
+    backgroundColor: "black",
     padding: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   selectButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-   pickerItem: {
+  pickerItem: {
     fontSize: 20,
-    color: "black", 
+    color: "black",
   },
   paginationContainer: {
-  flexDirection: "row",
-  justifyContent: "center",
-  alignItems: "center",
-  marginVertical: 10,
-},
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 10,
+  },
 
   pageButton: {
     paddingVertical: 8,
@@ -768,5 +744,4 @@ const styles = StyleSheet.create({
   pageIndicator: {
     marginHorizontal: 10,
   },
-
 });

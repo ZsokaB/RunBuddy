@@ -13,6 +13,7 @@ import { formatDateTime } from "../utils/dateUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../axiosInstance";
 import { config } from "../utils/config";
+import { useAuth } from "../context/AuthContext";
 
 const RunPostCard = ({
   item,
@@ -22,19 +23,13 @@ const RunPostCard = ({
   comments,
   navigation,
 }) => {
-  const [token, setToken] = useState("");
-
-  useEffect(() => {
-    loadToken();
-  }, []);
-
-  const loadToken = async () => {
-    const token = await AsyncStorage.getItem("token");
-    setToken(token);
-  };
+  const { token } = useAuth();
 
   const streamImageForRun = (runId) =>
     `${config.baseURL}/runs/StreamImageForRun/${runId}?access_token=${token}`;
+
+  const streamProfileImage = (userId) =>
+    `${config.baseURL}/users/StreamProfileImage/${userId}?access_token=${token}`;
 
   return (
     <Card style={styles.card}>
@@ -45,10 +40,10 @@ const RunPostCard = ({
           }
           style={styles.profileContainer}
         >
-          {item?.profileImage ? (
+          {item?.profileImagePath != null ? (
             <Avatar.Image
               size={50}
-              source={{ uri: `data:image/jpeg;base64,${item.profileImage}` }}
+              source={{ uri: `${streamProfileImage(item.userId)}` }}
             />
           ) : (
             <Avatar.Icon size={50} icon="account" />
@@ -139,12 +134,6 @@ const RunPostCard = ({
           source={{ uri: `${streamImageForRun(item.id)}` }}
           style={styles.routeImage}
         />
-        {/* <Image
-          source={{
-            uri: `https://e80b-2a01-c844-20cd-f000-1895-8d27-8eff-786c.ngrok-free.app/api/runs/StreamImageForRun/111?access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6Inpzb2thIiwibmFtZWlkIjoiYWU0M2JlYmItNjFjMS00MmU0LTgyZDQtN2Q1NmQ3NzUyZDg2IiwibmJmIjoxNzQwMjUzMTAzLCJleHAiOjE3NDA4NTc5MDMsImlhdCI6MTc0MDI1MzEwMywiaXNzIjoieW91cklzc3VlciIsImF1ZCI6InlvdXJBdWRpZW5jZSJ9.QA8RSZcmUI0FSQxxVX2-XgZYLgBdg3iWc8n-3V_BDI4`,
-          }}
-          style={styles.routeImage}
-        /> */}
       </ScrollView>
 
       <Divider style={styles.divider} />

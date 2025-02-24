@@ -13,8 +13,9 @@ import { Icon } from "react-native-elements";
 
 import Plan from "../data/plans";
 import Colors from "../constants/colors";
- import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../axiosInstance";
+import { useAuth } from "../context/AuthContext";
 const screenWidth = Dimensions.get("window").width;
 
 export default function PlansScreen() {
@@ -22,6 +23,7 @@ export default function PlansScreen() {
   const [selectedData, setSelectedData] = useState(null);
   const [completedWorkouts, setCompletedWorkouts] = useState([]);
   const scrollViewRef = useRef();
+  const { token } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -32,39 +34,27 @@ export default function PlansScreen() {
 
   const fetchCompletedWorkouts = async () => {
     try {
-      const token = await AsyncStorage.getItem("token");
-
-    if (!token) {
-      throw new Error("No token found");
-    }
-
-
-      const response = await api.get(
-        "/runs/getRunProgress",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await api.get("/runs/getRunProgress", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       const data = response.data;
-    console.log(response.data);
-     
+      console.log(response.data);
 
-        const completed = data.map((run) => ({
-          week: run.week,
-          day: run.day,
-        }));
-        setCompletedWorkouts(completed);
-        console.log(completedWorkouts);
-      
+      const completed = data.map((run) => ({
+        week: run.week,
+        day: run.day,
+      }));
+      setCompletedWorkouts(completed);
+      console.log(completedWorkouts);
     } catch (error) {
       console.error("Error fetching completed workouts:", error);
     }
   };
 
-   const handlePress = (weekIndex, dayIndex) => {
+  const handlePress = (weekIndex, dayIndex) => {
     const selectedWeek = Plan[weekIndex];
     const selectedDay = selectedWeek.days[dayIndex];
 
@@ -72,47 +62,47 @@ export default function PlansScreen() {
     setSelectedData(selectedDay);
   };
 
-const findLastDoneWorkout = async () => {
-  try {
-    const token = await AsyncStorage.getItem("token");
-    if (!token) throw new Error("No token found");
+  const findLastDoneWorkout = async () => {
+    try {
+      const response = await api.get("/runs/getNextRun", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    const response = await api.get("/runs/getNextRun", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+      const nextRun = response.data;
+      console.log("Next Run:", nextRun);
 
-    const nextRun = response.data;
-    console.log("Next Run:", nextRun);
+      if (!nextRun || nextRun.message) {
+        console.log("No next run available:", nextRun.message);
+        return;
+      }
 
-    if (!nextRun || nextRun.message) {
-      console.log("No next run available:", nextRun.message);
-      return;
+      const weekIndex = nextRun.week - 1; // Adjusting for zero-based index
+      const dayIndex = nextRun.day - 1;
+
+      if (
+        weekIndex < 0 ||
+        weekIndex >= Plan.length ||
+        dayIndex < 0 ||
+        dayIndex >= Plan[weekIndex].days.length
+      ) {
+        console.error("Invalid week or day index");
+        return;
+      }
+
+      const selectedWeek = Plan[weekIndex];
+      const selectedDay = selectedWeek.days[dayIndex];
+
+      setSelected({ week: nextRun.week, day: nextRun.day });
+      setSelectedData(selectedDay);
+
+      setTimeout(() => scrollToWeek(weekIndex), 10);
+    } catch (error) {
+      console.error("Error fetching next run:", error);
     }
-
-    const weekIndex = nextRun.week - 1; // Adjusting for zero-based index
-    const dayIndex = nextRun.day - 1;
-
-    if (weekIndex < 0 || weekIndex >= Plan.length || dayIndex < 0 || dayIndex >= Plan[weekIndex].days.length) {
-      console.error("Invalid week or day index");
-      return;
-    }
-
-    const selectedWeek = Plan[weekIndex];
-    const selectedDay = selectedWeek.days[dayIndex];
-
-    setSelected({ week: nextRun.week, day: nextRun.day });
-    setSelectedData(selectedDay);
-
-    setTimeout(() => scrollToWeek(weekIndex), 10);
-  } catch (error) {
-    console.error("Error fetching next run:", error);
-  }
-};
-
-
+  };
 
   const scrollToWeek = (week) => {
     scrollViewRef.current?.scrollTo({
@@ -121,40 +111,37 @@ const findLastDoneWorkout = async () => {
     });
   };
 
-
-function formatDuration(seconds) {
-  if (seconds < 0) {
-    throw new Error('Seconds cannot be negative');
-  }
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  let result = '';
-
-  if (hours > 0) {
-    result += `${hours} hour${hours > 1 ? 's' : ''}`;
-  }
-
-  if (minutes > 0) {
-    if (result.length > 0) {
-      result += ' ';
+  function formatDuration(seconds) {
+    if (seconds < 0) {
+      throw new Error("Seconds cannot be negative");
     }
-    result += `${minutes} minute${minutes > 1 ? 's' : ''}`;
-  }
 
-  if (remainingSeconds > 0 || result === '') {
-    if (result.length > 0) {
-      result += ' ';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    let result = "";
+
+    if (hours > 0) {
+      result += `${hours} hour${hours > 1 ? "s" : ""}`;
     }
-    result += `${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`;
+
+    if (minutes > 0) {
+      if (result.length > 0) {
+        result += " ";
+      }
+      result += `${minutes} minute${minutes > 1 ? "s" : ""}`;
+    }
+
+    if (remainingSeconds > 0 || result === "") {
+      if (result.length > 0) {
+        result += " ";
+      }
+      result += `${remainingSeconds} second${remainingSeconds > 1 ? "s" : ""}`;
+    }
+
+    return result;
   }
-
-  return result;
-}
-
-
 
   return (
     <View>
@@ -184,7 +171,10 @@ function formatDuration(seconds) {
                   >
                     <Pressable onPress={() => handlePress(weekIndex, dayIndex)}>
                       <Avatar.Text
-                        style={[styles.avatar, isCompleted && styles.doneAvatar]}
+                        style={[
+                          styles.avatar,
+                          isCompleted && styles.doneAvatar,
+                        ]}
                         size={50}
                         label={"Day " + day.day}
                         labelStyle={styles.avatarLabel}
@@ -199,13 +189,15 @@ function formatDuration(seconds) {
       </ScrollView>
 
       <Divider style={styles.divider} />
- <Divider style={styles.divider} />
+      <Divider style={styles.divider} />
       {selectedData && (
         <View style={styles.detailsContainer}>
           <View style={styles.infoContainer}>
             <View style={styles.rowContainer}>
               <Text style={styles.descriptionText}>Duration: </Text>
-              <Text style={styles.durationValue}>{formatDuration(selectedData.duration)}</Text>
+              <Text style={styles.durationValue}>
+                {formatDuration(selectedData.duration)}
+              </Text>
             </View>
             <View>
               <Text style={styles.descriptionText}>Workout Goal: </Text>
@@ -278,8 +270,6 @@ function formatDuration(seconds) {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {

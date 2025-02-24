@@ -31,6 +31,8 @@ import api from "../axiosInstance";
 import { formatDateTime } from "../utils/dateUtils";
 import CommentModal from "../components/CommentModal";
 import RunPostCard from "../components/RunPostCard";
+import { useAuth } from "../context/AuthContext";
+import { config } from "../utils/config";
 
 export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState("Feed");
@@ -43,6 +45,7 @@ export default function CommunityPage() {
   const [selectedRun, setSelectedRun] = useState(null);
   const [isCommentVisible, setCommentVisible] = useState(false);
   const [visible, setVisible] = useState(false);
+  const { token } = useAuth();
 
   const showModal = (run) => {
     setSelectedRun(run);
@@ -60,13 +63,6 @@ export default function CommunityPage() {
 
   const fetchRuns = async () => {
     try {
-      const token = await AsyncStorage.getItem("token"); // Ensure 'authToken' matches the key you're using
-
-      if (!token) {
-        console.error("Token is missing. Please log in.");
-        return;
-      }
-
       const response = await api.get("/runs/followed/recent", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -88,7 +84,7 @@ export default function CommunityPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        likesData[run.id] = likesResponse.data.count;
+        likesData[run.id] = likesResponse.data.likeCount;
         commentsData[run.id] = commentsResponse.data;
       }
 
@@ -111,12 +107,6 @@ export default function CommunityPage() {
 
   const handleLike = async (id) => {
     try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing. Please log in.");
-        return;
-      }
-
       await api.post(
         `/runs/${id}/like`,
         {},
@@ -138,12 +128,6 @@ export default function CommunityPage() {
     if (!commentText.trim()) return;
 
     try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) {
-        console.error("Token is missing. Please log in.");
-        return;
-      }
-
       await api.post(
         `/runs/${selectedRun.id}/comments`,
         { text: commentText },
@@ -172,6 +156,9 @@ export default function CommunityPage() {
     navigation.navigate("ProfileScreen", { userId });
   };
 
+  const streamProfileImage = (userId) =>
+    `${config.baseURL}/users/StreamProfileImage/${userId}?access_token=${token}`;
+
   const renderItem = ({ item }) => (
     <RunPostCard
       item={item}
@@ -187,36 +174,42 @@ export default function CommunityPage() {
     const progress = item.currentDistance / item.totalDistance;
 
     return (
-      <Card style={styles.card}>
-        <Text variant="titleMedium" style={styles.challengeTitle}>
-          {item.title}
-        </Text>
+      <Card
+        mode="outlined"
+        style={styles.card}
+        theme={{ colors: { outline: "red", primary: "black" } }}
+      >
+        <View>
+          <Text variant="titleMedium" style={styles.challengeTitle}>
+            {item.title}
+          </Text>
 
-        <ProgressBar
-          progress={progress}
-          color="#6200ea"
-          style={styles.progressBar}
-        />
-        <Text>
-          {item.currentDistance} / {item.totalDistance} km completed
-        </Text>
-        <View style={styles.participants}>
-          {item.participants.map((participant, index) => (
-            <View key={index} style={styles.participantItem}>
-              <Image
-                source={{ uri: participant.profileImage }}
-                style={styles.participantProfileImage}
-              />
-              <Text style={styles.participantName} variant="labelLarge">
-                {participant.name}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <View style={styles.buttonContainer}>
-          <Button mode="contained" style={styles.challengeButton}>
-            Send motivation
-          </Button>
+          <ProgressBar
+            progress={progress}
+            color="#6200ea"
+            style={styles.progressBar}
+          />
+          <Text>
+            {item.currentDistance} / {item.totalDistance} km completed
+          </Text>
+          <View style={styles.participants}>
+            {item.participants.map((participant, index) => (
+              <View key={index} style={styles.participantItem}>
+                <Image
+                  source={{ uri: participant.profileImage }}
+                  style={styles.participantProfileImage}
+                />
+                <Text style={styles.participantName} variant="labelLarge">
+                  {participant.name}
+                </Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button mode="contained" style={styles.challengeButton}>
+              Send motivation
+            </Button>
+          </View>
         </View>
       </Card>
     );
@@ -272,7 +265,12 @@ const styles = StyleSheet.create({
   tabText: { paddingHorizontal: 10, marginVertical: 5, color: "gray" },
   activeTabText: { color: "black", textDecorationLine: "underline" },
   list: { paddingBottom: 20 },
-  card: { marginBottom: 15, borderRadius: 10, padding: 10 },
+  card: {
+    marginBottom: 15,
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 25,
+  },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   userInfo: {
     marginLeft: 10,

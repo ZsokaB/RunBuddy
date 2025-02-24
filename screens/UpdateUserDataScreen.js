@@ -4,10 +4,16 @@ import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Button } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const UpdateUserDataScreen = ({ route }) => {
   const { userId } = route.params;
-  const { control, handleSubmit, formState: { errors }, reset } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
     defaultValues: {
       username: "",
       firstName: "",
@@ -23,13 +29,18 @@ const UpdateUserDataScreen = ({ route }) => {
   });
 
   const [loading, setLoading] = useState(true);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
         if (userId) {
-          const response = await api.get(`/users/${userId}`);
+          const response = await api.get(`/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           const userData = response.data;
 
           reset({
@@ -56,9 +67,6 @@ const UpdateUserDataScreen = ({ route }) => {
 
   const onSubmit = async (data) => {
     try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-
       const response = await api.put("/user/update", data, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -99,7 +107,9 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="username"
       />
-      {errors.username && <Text style={styles.error}>{errors.username.message}</Text>}
+      {errors.username && (
+        <Text style={styles.error}>{errors.username.message}</Text>
+      )}
 
       {/* First Name */}
       <Controller
@@ -116,7 +126,9 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="firstName"
       />
-      {errors.firstName && <Text style={styles.error}>{errors.firstName.message}</Text>}
+      {errors.firstName && (
+        <Text style={styles.error}>{errors.firstName.message}</Text>
+      )}
 
       {/* Last Name */}
       <Controller
@@ -133,7 +145,9 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="lastName"
       />
-      {errors.lastName && <Text style={styles.error}>{errors.lastName.message}</Text>}
+      {errors.lastName && (
+        <Text style={styles.error}>{errors.lastName.message}</Text>
+      )}
 
       {/* Gender */}
       <Controller
@@ -150,12 +164,17 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="gender"
       />
-      {errors.gender && <Text style={styles.error}>{errors.gender.message}</Text>}
+      {errors.gender && (
+        <Text style={styles.error}>{errors.gender.message}</Text>
+      )}
 
       {/* Weight */}
       <Controller
         control={control}
-        rules={{ required: "Weight is required", min: { value: 30, message: "Too low" } }}
+        rules={{
+          required: "Weight is required",
+          min: { value: 30, message: "Too low" },
+        }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
             style={styles.input}
@@ -168,12 +187,17 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="weight"
       />
-      {errors.weight && <Text style={styles.error}>{errors.weight.message}</Text>}
+      {errors.weight && (
+        <Text style={styles.error}>{errors.weight.message}</Text>
+      )}
 
       {/* Height */}
       <Controller
         control={control}
-        rules={{ required: "Height is required", min: { value: 100, message: "Too short" } }}
+        rules={{
+          required: "Height is required",
+          min: { value: 100, message: "Too short" },
+        }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
             style={styles.input}
@@ -186,7 +210,9 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="height"
       />
-      {errors.height && <Text style={styles.error}>{errors.height.message}</Text>}
+      {errors.height && (
+        <Text style={styles.error}>{errors.height.message}</Text>
+      )}
 
       {/* Birthdate */}
       <Controller
@@ -203,7 +229,9 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="birthdate"
       />
-      {errors.birthdate && <Text style={styles.error}>{errors.birthdate.message}</Text>}
+      {errors.birthdate && (
+        <Text style={styles.error}>{errors.birthdate.message}</Text>
+      )}
 
       {/* Email */}
       <Controller
@@ -245,7 +273,12 @@ const UpdateUserDataScreen = ({ route }) => {
       {/* New Password */}
       <Controller
         control={control}
-        rules={{ minLength: { value: 6, message: "Password must be at least 6 characters" } }}
+        rules={{
+          minLength: {
+            value: 6,
+            message: "Password must be at least 6 characters",
+          },
+        }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
             style={styles.input}
@@ -258,9 +291,15 @@ const UpdateUserDataScreen = ({ route }) => {
         )}
         name="newPassword"
       />
-      {errors.newPassword && <Text style={styles.error}>{errors.newPassword.message}</Text>}
+      {errors.newPassword && (
+        <Text style={styles.error}>{errors.newPassword.message}</Text>
+      )}
 
-      <Button mode="contained" onPress={handleSubmit(onSubmit)} style={styles.button}>
+      <Button
+        mode="contained"
+        onPress={handleSubmit(onSubmit)}
+        style={styles.button}
+      >
         Save Changes
       </Button>
     </View>
@@ -269,8 +308,19 @@ const UpdateUserDataScreen = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 5, padding: 10, marginBottom: 10 },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
   error: { color: "red", marginBottom: 10 },
   button: { marginTop: 10 },
 });

@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  Text,
-  Alert,
-  Image,
-} from "react-native";
+import { StyleSheet, View, ScrollView, Text, Alert, Image } from "react-native";
 import { Button, IconButton } from "react-native-paper";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import axios from "axios";
@@ -17,28 +10,23 @@ import { formatDateTime } from "../utils/dateUtils";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { colors } from "react-native-elements";
 import Colors from "../constants/colors";
+import { useAuth } from "../context/AuthContext";
+import { config } from "../utils/config";
 
 export default function RunDetailsScreen({ route }) {
   const { runId } = route.params;
   const [runDetails, setRunDetails] = useState(null);
-  const [token, setToken] = useState(null);
-const [feeling, setFeeling] = useState(null);
-
+  const { token } = useAuth();
+  const [feeling, setFeeling] = useState(null);
 
   useEffect(() => {
     const fetchRunDetails = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem("token");
-        setToken(storedToken);
-
-        const response = await api.get(
-          `/runs/${runId}?lowQuality=true`,
-          {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          }
-        );
+        const response = await api.get(`/runs/${runId}?lowQuality=true`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         setRunDetails(response.data);
       } catch (error) {
@@ -69,12 +57,12 @@ const [feeling, setFeeling] = useState(null);
     type,
     calories,
     date,
+    id,
   } = runDetails;
 
-  
-     const formattedDateTime = formatDateTime(date);
+  const formattedDateTime = formatDateTime(date);
 
-      const feelings = [
+  const feelings = [
     { value: 1, icon: "emoticon-excited-outline", label: "Great" },
     { value: 2, icon: "emoticon-happy-outline", label: "Good" },
     { value: 3, icon: "emoticon-neutral-outline", label: "Okay" },
@@ -82,10 +70,8 @@ const [feeling, setFeeling] = useState(null);
     { value: 5, icon: "emoticon-angry-outline", label: "Terrible" },
   ];
 
-  
   const selectedFeeling = feelings.find((feeling) => feeling.value === rating);
 
-   
   const getRegionForCoordinates = (coordinates) => {
     const latitudes = coordinates.map((coord) => coord.latitude);
     const longitudes = coordinates.map((coord) => coord.longitude);
@@ -96,7 +82,7 @@ const [feeling, setFeeling] = useState(null);
     const maxLng = Math.max(...longitudes);
 
     const latitudeDelta = maxLat - minLat + 0.01;
-    const longitudeDelta = maxLng - minLng + 0.01; 
+    const longitudeDelta = maxLng - minLng + 0.01;
 
     const latitude = (maxLat + minLat) / 2;
     const longitude = (maxLng + minLng) / 2;
@@ -109,66 +95,68 @@ const [feeling, setFeeling] = useState(null);
     };
   };
 
+  const streamImageForRun = (runId) =>
+    `${config.baseURL}/runs/StreamImageForRun/${runId}?access_token=${token}`;
+
   const region = getRegionForCoordinates(coordinates);
   return (
     <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.weekDayTitle}>{type}</Text>
-                <Text style={styles.dateTimeText}>{formattedDateTime}</Text>
-        
-<MapView style={styles.map} initialRegion={region}>
-  {coordinates.length > 0 && (
-    <>
-    
-      <Marker
-        coordinate={coordinates[0]}
-        title="Start"
-        description="Starting Point"
-        pinColor="green"
-      />
-      
-      
-      <Marker
-        coordinate={coordinates[coordinates.length - 1]}
-        title="End"
-        description="Ending Point"
-        pinColor="red" 
-      />
+      <Text style={styles.weekDayTitle}>{type}</Text>
+      <Text style={styles.dateTimeText}>{formattedDateTime}</Text>
 
-    
-      <Polyline coordinates={coordinates} strokeWidth={3} strokeColor="blue" />
-    </>
-  )}
-</MapView>
+      <MapView style={styles.map} initialRegion={region}>
+        {coordinates.length > 0 && (
+          <>
+            <Marker
+              coordinate={coordinates[0]}
+              title="Start"
+              description="Starting Point"
+              pinColor="green"
+            />
 
-    <View style={styles.statsGrid}>
-  
-  <View style={styles.statsRow}>
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{distance.toFixed(2)} km</Text>
-      <Text style={styles.statLabel}>Distance</Text>
-    </View>
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{duration}</Text>
-      <Text style={styles.statLabel}>Duration</Text>
-    </View>
-  </View>
+            <Marker
+              coordinate={coordinates[coordinates.length - 1]}
+              title="End"
+              description="Ending Point"
+              pinColor="red"
+            />
 
+            <Polyline
+              coordinates={coordinates}
+              strokeWidth={3}
+              strokeColor="blue"
+            />
+          </>
+        )}
+      </MapView>
 
-  <View style={styles.statsRow}>
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{formatPace(pace)}</Text>
-      <Text style={styles.statLabel}>Pace</Text>
-    </View>
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{calories || "N/A"} kcal</Text>
-      <Text style={styles.statLabel}>Calories</Text>
-    </View>
-  </View>
-</View>
+      <View style={styles.statsGrid}>
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{distance.toFixed(2)} km</Text>
+            <Text style={styles.statLabel}>Distance</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{duration}</Text>
+            <Text style={styles.statLabel}>Duration</Text>
+          </View>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{formatPace(pace)}</Text>
+            <Text style={styles.statLabel}>Pace</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{calories || "N/A"} kcal</Text>
+            <Text style={styles.statLabel}>Calories</Text>
+          </View>
+        </View>
+      </View>
 
       <Text style={styles.sectionTitle}>Notes</Text>
       <Text style={styles.notes}>{note || "No notes available."}</Text>
- <View style={styles.ratingContainer}>
+      <View style={styles.ratingContainer}>
         <Text style={styles.sectionTitle}>Run Rating</Text>
         {selectedFeeling && (
           <MaterialCommunityIcons
@@ -176,26 +164,20 @@ const [feeling, setFeeling] = useState(null);
             size={40}
             color="#6200ee"
           />
-         
-        )} 
-       {selectedFeeling &&  (<Text>{selectedFeeling.label}</Text>)}
+        )}
+        {selectedFeeling && <Text>{selectedFeeling.label}</Text>}
       </View>
       {image && (
         <>
           <Text style={styles.sectionTitle}>Photo</Text>
-          <Image source={{ uri: `data:image/jpeg;base64,${image}`}} style={styles.selectedImage} />
+          <Image
+            source={{ uri: streamImageForRun(id) }}
+            style={styles.selectedImage}
+          />
         </>
       )}
 
-
-  
-     
-
       <Text style={styles.sectionTitle}>Splits</Text>
-     
-
-    
-     
     </ScrollView>
   );
 }
@@ -215,7 +197,7 @@ const styles = StyleSheet.create({
   },
   dateTimeText: {
     fontSize: 16,
-    color: "#6b7280", 
+    color: "#6b7280",
     textAlign: "left",
     marginBottom: 20,
   },
@@ -228,7 +210,7 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     width: "100%",
-    marginBottom: 10, 
+    marginBottom: 10,
   },
   statsRow: {
     flexDirection: "row",

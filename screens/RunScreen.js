@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ImageBackground, TouchableOpacity, Dimensions } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ImageBackground,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import { Text, Button, IconButton } from "react-native-paper";
 import { Icon } from "react-native-elements";
 import MapView from "react-native-maps";
@@ -13,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Plan from "../data/plans";
 import Colors from "../constants/colors";
 import RoutineProgressBar from "../components/RoutineProgressBar";
+import { useAuth } from "../context/AuthContext";
 
 export default function RunScreen() {
   const [workout, setWorkout] = useState({ week: null, day: null });
@@ -25,90 +32,76 @@ export default function RunScreen() {
   const [isPaused, setIsPaused] = useState(false);
   const [runningStarted, setRunningStarted] = useState(false);
   const [freeRunStarted, setFreeRunStarted] = useState(false);
- 
+
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const [currentActivityTime, setCurrentActivityTime] = useState(0);
 
   const [region, setRegion] = useState(null);
   const [distance, setDistance] = useState(0);
-   const [calories, setCalories] = useState(10);
+  const [calories, setCalories] = useState(10);
   const [previousLocation, setPreviousLocation] = useState(null);
-   const [routeCoordinates, setRouteCoordinates] = useState([]);
-     const [locationSubscription, setLocationSubscription] = useState(null);
-
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [locationSubscription, setLocationSubscription] = useState(null);
 
   const [totalDuration, setTotalDuration] = useState(0);
   const [pace, setPace] = useState(null);
 
-    const [distanceCovered, setDistanceCovered] = useState(0); 
-    const [kilometerPaces, setKilometerPaces] = useState([]); 
-    const [startTime, setStartTime] = useState(new Date().getTime());
-  
+  const [distanceCovered, setDistanceCovered] = useState(0);
+  const [kilometerPaces, setKilometerPaces] = useState([]);
+  const [startTime, setStartTime] = useState(new Date().getTime());
 
   const [activeTab, setActiveTab] = useState("Guided Run");
+  const { token } = useAuth();
 
-   const navigation = useNavigation();
+  const navigation = useNavigation();
 
-    useEffect(() => {
-    
+  useEffect(() => {
     const fetchNextRun = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
-
-    if (!token) {
-      console.error("Token is missing. Please log in.");
-      return;
-    }
-
         const response = await api.get("/runs/getNextRun", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }); 
-        setWorkout({week : response.data.week, day: response.data.day});
-         console.log("nextrun", workout);
-      
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setWorkout({ week: response.data.week, day: response.data.day });
+        console.log("nextrun", workout);
       } catch (error) {
         console.error("Failed to fetch next run:", error);
       }
-      
     };
-    
+
     fetchNextRun();
-   
   }, []);
 
-useEffect(() => {
-  const addWorkoutData = () => {
-    if (!workout || !workout.week || !workout.day) return; // Ensure workout has values
+  useEffect(() => {
+    const addWorkoutData = () => {
+      if (!workout || !workout.week || !workout.day) return; // Ensure workout has values
 
-    const { week, day } = workout;
-    const weekData = Plan.find((w) => w.week === week);
-    
-    if (!weekData) {
-      console.error(`Week ${week} not found in Plan`);
-      return;
-    }
+      const { week, day } = workout;
+      const weekData = Plan.find((w) => w.week === week);
 
-    const dayData = weekData.days.find((d) => d.day === day);
-    
-    if (!dayData) {
-      console.error(`Day ${day} not found in Week ${week}`);
-      return;
-    }
+      if (!weekData) {
+        console.error(`Week ${week} not found in Plan`);
+        return;
+      }
 
-    setWorkoutData(dayData);
-    if (dayData.routine && dayData.routine.length > 0) {
+      const dayData = weekData.days.find((d) => d.day === day);
+
+      if (!dayData) {
+        console.error(`Day ${day} not found in Week ${week}`);
+        return;
+      }
+
+      setWorkoutData(dayData);
+      if (dayData.routine && dayData.routine.length > 0) {
         setCurrentActivityTime(dayData.routine[0].duration || 0);
       }
-  };
+    };
 
-  addWorkoutData();
-}, [workout]); 
+    addWorkoutData();
+  }, [workout]);
 
- 
-
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const toRadian = (angle) => (Math.PI / 180) * angle;
 
     const RADIUS_OF_EARTH_IN_KM = 6371;
@@ -129,109 +122,102 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return finalDistance;
   };
 
-useEffect(() => {
-  const getPermissionAndStartTracking = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.error("Location permission not granted.");
-        return;
-      }
+  useEffect(() => {
+    const getPermissionAndStartTracking = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.error("Location permission not granted.");
+          return;
+        }
 
-      const initialLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const { latitude, longitude } = initialLocation.coords;
-
-      setRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-
-      const subscription = await Location.watchPositionAsync(
-        {
+        const initialLocation = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
-          distanceInterval: 10,
-        },
-        (newLocation) => {
-          const { latitude, longitude } = newLocation.coords;
+        });
+        const { latitude, longitude } = initialLocation.coords;
 
-          
-          setRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
+        setRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
 
-         
-          if (isRunning) {
-            if (previousLocation) {
-              const newDistance = calculateDistance(
-                previousLocation.latitude,
-                previousLocation.longitude,
-                latitude,
-                longitude
-              );
+        const subscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Balanced,
+            distanceInterval: 10,
+          },
+          (newLocation) => {
+            const { latitude, longitude } = newLocation.coords;
 
-               if (isRunning && routeCoordinates.length === 0) {
-           
-            setRouteCoordinates([{ latitude, longitude }]);
-            setPreviousLocation({ latitude, longitude });
-          }
-          console.log(routeCoordinates);
-              if (newDistance >= 30) { 
-                setDistance((prevDistance) => prevDistance + newDistance);
-                setRouteCoordinates((prevCoords) => [
-                  ...prevCoords,
-                  { latitude, longitude },
-                ]);
+            setRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+
+            if (isRunning) {
+              if (previousLocation) {
+                const newDistance = calculateDistance(
+                  previousLocation.latitude,
+                  previousLocation.longitude,
+                  latitude,
+                  longitude
+                );
+
+                if (isRunning && routeCoordinates.length === 0) {
+                  setRouteCoordinates([{ latitude, longitude }]);
+                  setPreviousLocation({ latitude, longitude });
+                }
+                console.log(routeCoordinates);
+                if (newDistance >= 30) {
+                  setDistance((prevDistance) => prevDistance + newDistance);
+                  setRouteCoordinates((prevCoords) => [
+                    ...prevCoords,
+                    { latitude, longitude },
+                  ]);
+                  setPreviousLocation({ latitude, longitude });
+                }
+              } else {
                 setPreviousLocation({ latitude, longitude });
               }
-            } else {
-              
-              setPreviousLocation({ latitude, longitude });
             }
           }
-        }
-      );
+        );
 
-      setLocationSubscription(subscription);
-    } catch (error) {
-      console.error("Error tracking location:", error);
+        setLocationSubscription(subscription);
+      } catch (error) {
+        console.error("Error tracking location:", error);
+      }
+    };
+
+    getPermissionAndStartTracking();
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+  }, [isRunning, previousLocation]);
+
+  const trackDistance = (currentDistance) => {
+    console.log("Tracking distance:", currentDistance, distanceCovered);
+
+    while (Math.floor(currentDistance) > distanceCovered) {
+      const currentTime = new Date().getTime();
+      const kmTime = Math.floor((currentTime - startTime) / 1000); // Time for last km
+
+      setKilometerPaces((prevPaces) => [
+        ...prevPaces,
+        { kilometer: distanceCovered + 1, pace: kmTime },
+      ]);
+
+      setDistanceCovered((prevCovered) => prevCovered + 1);
+      setStartTime(currentTime);
     }
   };
-
-  getPermissionAndStartTracking();
-
-  return () => {
-    if (locationSubscription) {
-      locationSubscription.remove();
-    }
-  };
-}, [isRunning, previousLocation]);
-
- 
-
-   const trackDistance = (currentDistance) => {
-  console.log("Tracking distance:", currentDistance, distanceCovered);
-  
-  while (Math.floor(currentDistance) > distanceCovered) {
-    const currentTime = new Date().getTime();
-    const kmTime = Math.floor((currentTime - startTime) / 1000); // Time for last km
-
-    setKilometerPaces((prevPaces) => [
-      ...prevPaces,
-      { kilometer: distanceCovered + 1, pace: kmTime },
-    ]);
-
-    setDistanceCovered((prevCovered) => prevCovered + 1);
-    setStartTime(currentTime);
-  }
-};
-
 
   useEffect(() => {
     if (distance > 0 && totalDuration > 0) {
@@ -253,9 +239,6 @@ useEffect(() => {
       );
     }
   }, [currentActivityTime]);
-
-
-
 
   const formatDuration = (durationInSeconds) => {
     if (!durationInSeconds) return "00:00:00";
@@ -291,24 +274,25 @@ useEffect(() => {
   };
 
   const resetRunScreen = () => {
-  setTotalDuration(0);
-   setCurrentActivityIndex(0);
-  setCurrentActivityTime(0);
-  setRunTimer(null);
-  setIsRunning(false);
-  setIsPaused(false);
-  setRunningStarted(false);
-  setFreeRunStarted(false);
- 
-  setRegion(null);
-  setDistance(0);
-  setPreviousLocation(null);
-  setRouteCoordinates([]);
-  setPace(null);
-  setActiveTab("Guided Run");
-};
+    setTotalDuration(0);
+    setCurrentActivityIndex(0);
+    setCurrentActivityTime(0);
+    setRunTimer(null);
+    setIsRunning(false);
+    setIsPaused(false);
+    setRunningStarted(false);
+    setFreeRunStarted(false);
 
-  {/*
+    setRegion(null);
+    setDistance(0);
+    setPreviousLocation(null);
+    setRouteCoordinates([]);
+    setPace(null);
+    setActiveTab("Guided Run");
+  };
+
+  {
+    /*
   const startRun = () => {
     if (runTimer) {
       clearInterval(runTimer);
@@ -364,8 +348,8 @@ useEffect(() => {
   );
 };
 
-*/}
-
+*/
+  }
 
   const startRun = () => {
     if (runTimer) {
@@ -381,9 +365,9 @@ useEffect(() => {
     } else {
       setRunningStarted(true);
     }
-   if (!isRunning) { 
-    setTotalDuration((prevDuration) => prevDuration); 
-  }
+    if (!isRunning) {
+      setTotalDuration((prevDuration) => prevDuration);
+    }
     setIsRunning(true);
     setIsPaused(false);
 
@@ -397,36 +381,40 @@ useEffect(() => {
             ...prevData,
             duration: prevData.duration > 0 ? prevData.duration - 1 : 0,
           }));
-          setCurrentActivityTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+          setCurrentActivityTime((prevTime) =>
+            prevTime > 0 ? prevTime - 1 : 0
+          );
         }
-         trackDistance(distance);
+        trackDistance(distance);
       }, 1000)
     );
   };
 
   const handleContinueRun = () => {
     if (runTimer) {
-    clearInterval(runTimer);
-  }
+      clearInterval(runTimer);
+    }
 
-  setIsPaused(false);
-  setIsRunning(true);
+    setIsPaused(false);
+    setIsRunning(true);
 
-  setRunTimer(
-    setInterval(() => {
-      setTotalDuration((prevDuration) => prevDuration + 1);
+    setRunTimer(
+      setInterval(() => {
+        setTotalDuration((prevDuration) => prevDuration + 1);
 
-      if (activeTab === "Guided Run") {
-        setWorkoutData((prevData) => ({
-          ...prevData,
-          duration: prevData.duration > 0 ? prevData.duration - 1 : 0,
-        }));
-        setCurrentActivityTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-      }
-       trackDistance(distance);
-    }, 1000)
-  );
-};
+        if (activeTab === "Guided Run") {
+          setWorkoutData((prevData) => ({
+            ...prevData,
+            duration: prevData.duration > 0 ? prevData.duration - 1 : 0,
+          }));
+          setCurrentActivityTime((prevTime) =>
+            prevTime > 0 ? prevTime - 1 : 0
+          );
+        }
+        trackDistance(distance);
+      }, 1000)
+    );
+  };
 
   const handleStopRun = () => {
     if (runTimer) {
@@ -434,26 +422,25 @@ useEffect(() => {
       setRunTimer(null);
     }
 
-     const type = activeTab === "Free Run"
-    ? "Free Run"
-    : `Week ${workout.week}, Day ${workout.day}`;
+    const type =
+      activeTab === "Free Run"
+        ? "Free Run"
+        : `Week ${workout.week}, Day ${workout.day}`;
 
-     resetRunScreen(); 
+    resetRunScreen();
 
     setIsRunning(false);
     setRunningStarted(false);
     setFreeRunStarted(false);
 
-    
     navigation.navigate("FinishedRunScreen", {
       distance,
       pace,
       duration: formatDuration(totalDuration),
-     routeCoordinates, 
-    type,
-    calories,
-    workout,
-   
+      routeCoordinates,
+      type,
+      calories,
+      workout,
     });
   };
 
@@ -463,25 +450,24 @@ useEffect(() => {
       currentActivityIndex === workoutData.routine.length - 1 &&
       currentActivityTime === 0
     ) {
-        if (runTimer) {
-    clearInterval(runTimer);
-  }
- const type = activeTab === "Free Run"
-    ? "Free Run"
-    : `Week ${workout.week}, Day ${workout.day}`;
+      if (runTimer) {
+        clearInterval(runTimer);
+      }
+      const type =
+        activeTab === "Free Run"
+          ? "Free Run"
+          : `Week ${workout.week}, Day ${workout.day}`;
 
-       resetRunScreen(); 
+      resetRunScreen();
       navigation.navigate("FinishedRunScreen", {
         distance,
         pace,
         duration: formatDuration(totalDuration),
-      routeCoordinates,
-       
+        routeCoordinates,
+
         //kilometerPaces,
-        type
-        
+        type,
       });
-      
     }
   }, [currentActivityIndex, currentActivityTime]);
 
@@ -508,34 +494,34 @@ useEffect(() => {
 
   return (
     <View style={{ display: "flex", flex: 1 }}>
-    {!runningStarted && !isRunning && (
-      <View style={styles.rowContainer}>
-        <TouchableOpacity onPress={() => setActiveTab("Guided Run")}>
-          <Text
-            style={[
-              styles.text,
-              { color: "gray" },
-              activeTab === "Guided Run" && styles.activeTabText,
-            ]}
-            variant="labelLarge"
-          >
-            Guided Run
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab("Free Run")}>
-          <Text
-            style={[
-              styles.text,
-              { color: "gray" },
-              activeTab === "Free Run" && styles.activeTabText,
-            ]}
-            variant="labelLarge"
-          >
-            Free Run
-          </Text>
-        </TouchableOpacity>
-      </View>
-    )}
+      {!runningStarted && !isRunning && (
+        <View style={styles.rowContainer}>
+          <TouchableOpacity onPress={() => setActiveTab("Guided Run")}>
+            <Text
+              style={[
+                styles.text,
+                { color: "gray" },
+                activeTab === "Guided Run" && styles.activeTabText,
+              ]}
+              variant="labelLarge"
+            >
+              Guided Run
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab("Free Run")}>
+            <Text
+              style={[
+                styles.text,
+                { color: "gray" },
+                activeTab === "Free Run" && styles.activeTabText,
+              ]}
+              variant="labelLarge"
+            >
+              Free Run
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <View style={styles.container}>
         {activeTab === "Guided Run" && (
           <>
@@ -550,17 +536,16 @@ useEffect(() => {
           </>
         )}
 
-        {!runningStarted && activeTab === "Free Run" && <>
-        <Text>Start Your Free Run.</Text>
-        
-        </>}
-
-   {freeRunStarted && (
+        {!runningStarted && activeTab === "Free Run" && (
           <>
-          <Text style={styles.workoutDurationText} variant="displayMedium">
-              {totalDuration
-                ? formatDuration(totalDuration)
-                : "00:00:00"}
+            <Text>Start Your Free Run.</Text>
+          </>
+        )}
+
+        {freeRunStarted && (
+          <>
+            <Text style={styles.workoutDurationText} variant="displayMedium">
+              {totalDuration ? formatDuration(totalDuration) : "00:00:00"}
             </Text>
             <Text style={styles.hmsText} variant="labelMedium">
               Hours : Minutes : Seconds
@@ -590,8 +575,8 @@ useEffect(() => {
                   Calories
                 </Text>
               </View>
-               </View>
-        </>
+            </View>
+          </>
         )}
 
         {!runningStarted && activeTab === "Guided Run" && (
@@ -728,15 +713,15 @@ useEffect(() => {
         )}
       </View>
 
-     {activeTab === "Guided Run" && (
-          <>
-              <RoutineProgressBar
-        routine={workoutData.routine}
-        elapsedSeconds={workoutData.duration}
-        isRunning={isRunning}
-      />
-  </>
-        )}
+      {activeTab === "Guided Run" && (
+        <>
+          <RoutineProgressBar
+            routine={workoutData.routine}
+            elapsedSeconds={workoutData.duration}
+            isRunning={isRunning}
+          />
+        </>
+      )}
 
       <View style={{ flex: 1 }}>
         {region && (
@@ -756,52 +741,49 @@ useEffect(() => {
             mode="contained"
             buttonColor="rgb(233, 223, 235)"
           />
-     {isPaused ? (
-          <>
+          {isPaused ? (
+            <>
+              <Button
+                style={styles.pauseButton}
+                mode="contained"
+                onPress={handleContinueRun}
+              >
+                <Icon
+                  name={"controller-play"}
+                  type={"entypo"}
+                  size={24}
+                  color="white"
+                />
+              </Button>
+              <Button
+                style={styles.pauseButton}
+                mode="contained"
+                onPress={handleStopRun}
+              >
+                <Icon
+                  name={"controller-stop"}
+                  type={"entypo"}
+                  size={24}
+                  color="white"
+                />
+              </Button>
+            </>
+          ) : (
             <Button
-              style={styles.pauseButton}
+              style={styles.startButton}
               mode="contained"
-              onPress={handleContinueRun}
+              onPress={startRun}
             >
-               <Icon
-                name={"controller-play"}
-                type={"entypo"}
-                size={24}
-                color="white"
-                
-              />
+              {isRunning ? "Pause" : "START"}
             </Button>
-            <Button
-              style={styles.pauseButton}
-              mode="contained"
-              onPress={handleStopRun}
-            >
-               <Icon
-                name={"controller-stop"}
-                type={"entypo"}
-                size={24}
-                color="white"
-                
-              />
-            </Button>
-          </>
-        ) : (
-          <Button
-            style={styles.startButton}
-            mode="contained"
-            onPress={startRun}
-          >
-            {isRunning ? "Pause" : "START"}
-          </Button>
-        )}
-     
+          )}
+
           <IconButton
             icon="cog"
             style={styles.musicButton}
             mode="contained"
             buttonColor="rgb(233, 223, 235)"
           />
-         
         </View>
       </View>
     </View>
@@ -832,7 +814,7 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: "black",
     textDecorationLine: "underline",
-    paddingBottom: 5, 
+    paddingBottom: 5,
   },
   nextWorkoutText: {
     color: Colors.green,
@@ -884,7 +866,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-    pauseButton: {
+  pauseButton: {
     marginHorizontal: 5,
     width: "20%",
     padding: 5,
@@ -912,7 +894,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    width: Dimensions.get("window").width, 
+    width: Dimensions.get("window").width,
   },
 
   image: {

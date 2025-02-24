@@ -1,10 +1,25 @@
 import React from "react";
 import { View, FlatList, StyleSheet } from "react-native";
-import { Modal, IconButton, TextInput, Card, Text } from "react-native-paper";
+import { IconButton, TextInput, Card, Text, Modal } from "react-native-paper";
 
-const CommentModal = ({ visible, onClose, comments, commentText, setCommentText, handleCommentSubmit }) => {
+const CommentModal = ({
+  visible,
+  onClose,
+  comments,
+  commentText,
+  setCommentText,
+  handleCommentSubmit,
+}) => {
   return (
-    <Modal visible={visible} onDismiss={onClose} hideModalContentWhileAnimating  backdropTransitionOutTiming={0}  contentContainerStyle={styles.modalContainer}>
+    <Modal
+      visible={visible}
+      onDismiss={onClose}
+      hideModalContentWhileAnimating
+      backdropTransitionOutTiming={0}
+      contentContainerStyle={styles.modalContainer}
+      animationIn="fadeIn"
+      animationOut="fadeOut"
+    >
       <View style={styles.commentList}>
         <FlatList
           data={comments}
@@ -29,7 +44,11 @@ const CommentModal = ({ visible, onClose, comments, commentText, setCommentText,
           onChangeText={setCommentText}
           style={styles.input}
         />
-        <IconButton icon="send" onPress={handleCommentSubmit} disabled={!commentText.trim()} />
+        <IconButton
+          icon="send"
+          onPress={handleCommentSubmit}
+          disabled={!commentText.trim()}
+        />
       </View>
     </Modal>
   );
@@ -42,9 +61,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     borderRadius: 10,
     elevation: 5,
-
-   
-   
   },
   commentList: {
     maxHeight: 300, // Keeps it scrollable
