@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import * as Location from "expo-location";
 
-// Helper function to calculate distance between two coordinates using the Haversine formula
 const calculateDistance = (coord1, coord2) => {
   const toRad = (value) => (value * Math.PI) / 180;
 
@@ -18,7 +17,7 @@ const calculateDistance = (coord1, coord2) => {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  const R = 6371e3; // Earth radius in meters
+  const R = 6371e3;
   const distance = R * c;
 
   return distance;
@@ -41,8 +40,8 @@ const useLocationTracking = (isTracking) => {
       watchLocation = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
-          timeInterval: 1000, // 1 second
-          distanceInterval: 1, // 1 meter
+          timeInterval: 1000,
+          distanceInterval: 1,
         },
         (location) => {
           setLocationData((prevLocations) => {

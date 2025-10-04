@@ -1,7 +1,6 @@
-// src/context/UserContext.js
-import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import React, { createContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { handleError } from "../utils/errorHandler";
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
@@ -10,12 +9,16 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const storedUserId = await AsyncStorage.getItem('userId');
+        const storedUserId = await AsyncStorage.getItem("userId");
         if (storedUserId) {
           setUserId(storedUserId);
         }
       } catch (error) {
-        console.error('Error retrieving user ID from AsyncStorage:', error);
+        handleError(
+          error,
+          "Error retrieving user ID from AsyncStorage:",
+          error
+        );
       }
     };
     fetchUserId();

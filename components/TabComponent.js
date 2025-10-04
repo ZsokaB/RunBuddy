@@ -1,7 +1,6 @@
-// TabComponent.js
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import TabButton from "./TabButton"; // Import the TabButton component
+import TabButton from "./TabButton";
 
 const TabComponent = ({ activeTab, setActiveTab }) => {
   return (

@@ -22,28 +22,12 @@ import AddFriendScreen from "./screens/AddFriendScreen";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { UserProvider } from "./context/UsersContext";
 import UpdateUserDataScreen from "./screens/UpdateUserDataScreen";
+import RunningScreen from "./screens/RunningScreen";
 
 const BottomTab = createBottomTabNavigator();
 const RunStack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator();
 const GlobalStack = createNativeStackNavigator();
-
-function RunStackNavigator() {
-  return (
-    <RunStack.Navigator>
-      <RunStack.Screen
-        name="RunScreen"
-        component={RunScreen}
-        options={{ headerShown: false }}
-      />
-      <RunStack.Screen
-        name="FinishedRunScreen"
-        component={FinishedRunScreen}
-        options={{ title: "Run Summary" }}
-      />
-    </RunStack.Navigator>
-  );
-}
 
 function AuthStackNavigator() {
   return (
@@ -102,7 +86,7 @@ function AppNavigator() {
       />
       <BottomTab.Screen
         name="Run"
-        component={RunStackNavigator}
+        component={RunScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="run" color={color} size={size} />
@@ -153,6 +137,7 @@ export default function App() {
           <NavigationContainer>
             <GlobalStack.Navigator screenOptions={{ headerShown: false }}>
               <GlobalStack.Screen name="MainApp" component={AppNavigator} />
+
               <GlobalStack.Screen
                 name="RunDetailsScreen"
                 component={RunDetailsScreen}
@@ -169,6 +154,7 @@ export default function App() {
                   title: "Profile",
                   headerShown: true,
                   headerBackTitle: "Back",
+                  unmountOnBlur: true,
                 }}
               />
               <GlobalStack.Screen
@@ -180,7 +166,23 @@ export default function App() {
                   headerBackTitle: "Back",
                 }}
               />
-
+              <GlobalStack.Screen
+                name="FinishedRunScreen"
+                component={FinishedRunScreen}
+                options={{
+                  title: "Run Summary",
+                  headerShown: true,
+                  headerBackTitle: "Back",
+                }}
+              />
+              <GlobalStack.Screen
+                name="RunningScreen"
+                component={RunningScreen}
+                options={{
+                  title: "Running",
+                  gestureEnabled: false,
+                }}
+              />
               <GlobalStack.Screen
                 name="UpdateUserDataScreen"
                 component={UpdateUserDataScreen}

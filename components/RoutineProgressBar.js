@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import Colors from "../constants/colors";
-;
-
-// Color mapping for activities
 const activityColors = {
   "Warm-up": Colors.teal,
   Run: Colors.purple,
@@ -12,13 +9,7 @@ const activityColors = {
 };
 
 const RoutineProgressBar = ({ routine, elapsedSeconds, isRunning }) => {
-  const totalDuration = routine.reduce(
-    (sum, item) => sum + item.duration,
-    0
-  );
-
-  
-
+  const totalDuration = routine.reduce((sum, item) => sum + item.duration, 0);
 
   const [overlayWidth, setOverlayWidth] = useState(0);
 
@@ -78,7 +69,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.3)", 
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
 });
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, FlatList, StyleSheet } from "react-native";
 import { IconButton, TextInput, Card, Text, Modal } from "react-native-paper";
+import { formatDateTime } from "../utils/dateUtils";
 
 const CommentModal = ({
   visible,
@@ -30,6 +31,9 @@ const CommentModal = ({
                 <Text variant="titleSmall" style={styles.username}>
                   {item.userName}
                 </Text>
+                <Text variant="bodySmall" style={styles.timestamp}>
+                  {formatDateTime(item.createdAt)}
+                </Text>
                 <Text variant="bodyMedium">{item.text}</Text>
               </Card.Content>
             </Card>
@@ -56,14 +60,20 @@ const CommentModal = ({
 
 const styles = StyleSheet.create({
   modalContainer: {
-    backgroundColor: "white",
-    padding: 10,
-    marginHorizontal: 10,
-    borderRadius: 10,
+    width: "85%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 15,
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     elevation: 5,
+    position: "absolute",
   },
   commentList: {
-    maxHeight: 300, // Keeps it scrollable
+    maxHeight: 300,
     marginBottom: 10,
   },
   commentCard: {
@@ -74,6 +84,9 @@ const styles = StyleSheet.create({
   username: {
     fontWeight: "bold",
     marginBottom: 4,
+  },
+  timestamp: {
+    color: "gray",
   },
   inputContainer: {
     flexDirection: "row",

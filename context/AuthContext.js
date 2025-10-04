@@ -2,14 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../axiosInstance";
+import { Alert } from "react-native";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState(null);
 
-  // Check for token on app start
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = await AsyncStorage.getItem("token");
@@ -31,36 +33,26 @@ export const AuthProvider = ({ children }) => {
 
       console.log("Login response:", response.data);
 
-      const { token, userId } = response.data;
+      const { token, userId, userName } = response.data;
       if (!token || !userId) {
         throw new Error("Missing token or userId in the response");
       }
 
       setToken(token);
+      setUserId(userId);
       setIsAuthenticated(true);
+      setUserName(userName);
       await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("userName", userName);
       await AsyncStorage.setItem("userId", userId.toString());
     } catch (error) {
-      console.error(
-        "Login failed:",
-        error.response ? error.response.data : error.message
+      Alert.alert(
+        "Login failed",
+        error.response?.data?.message ||
+          error.message ||
+          "Something went wrong."
       );
-    }
-  };
-
-  const register = async (email, password) => {
-    try {
-      const response = await axios.post(
-        "https://a5e4-2a01-c844-20bc-7700-45a3-98ca-866e-a66a.ngrok-free.app/api/auth/register",
-        { username, password }
-      );
-      const userToken = response.data.token;
-      setToken(userToken);
-      setIsAuthenticated(true);
-      await AsyncStorage.setItem("token", userToken);
-    } catch (error) {
-      console.error("Registration failed:", error);
-      throw error;
+      console.log("ERROR:", error.toJSON?.() || error);
     }
   };
 
@@ -72,7 +64,14 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, login, register, logout, token }}
+      value={{
+        isAuthenticated,
+        login,
+        logout,
+        token,
+        userId,
+        userName,
+      }}
     >
       {children}
     </AuthContext.Provider>

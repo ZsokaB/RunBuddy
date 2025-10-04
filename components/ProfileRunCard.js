@@ -16,14 +16,18 @@ import { config } from "../utils/config";
 import { useAuth } from "../context/AuthContext";
 import { formatPace } from "../utils/paceUtils";
 
-const RunPostCard = ({ item, onLike, onComment, comments, navigation }) => {
+const ProfileRunCard = ({
+  item,
+  onLike,
+  onComment,
+  likes,
+  comments,
+  navigation,
+}) => {
   const { token } = useAuth();
 
   const streamImageForRun = (runId) =>
     `${config.baseURL}/runs/StreamImageForRun/${runId}?access_token=${token}`;
-
-  const streamProfileImage = (userId) =>
-    `${config.baseURL}/users/StreamProfileImage/${userId}?access_token=${token}`;
 
   return (
     <Card style={styles.card}>
@@ -34,18 +38,9 @@ const RunPostCard = ({ item, onLike, onComment, comments, navigation }) => {
           }
           style={styles.profileContainer}
         >
-          {item?.profileImagePath != null ? (
-            <Avatar.Image
-              size={50}
-              source={{ uri: `${streamProfileImage(item.userId)}` }}
-            />
-          ) : (
-            <Avatar.Icon size={50} icon="account" />
-          )}
           <View style={styles.userInfoContainer}>
             <View style={styles.userInfo}>
-              <Text variant="titleMedium">{item.username}</Text>
-              <Text variant="bodySmall" style={styles.dateText}>
+              <Text variant="labelLarge" style={styles.dateText}>
                 {formatDateTime(item.date)}
               </Text>
             </View>
@@ -121,7 +116,7 @@ const RunPostCard = ({ item, onLike, onComment, comments, navigation }) => {
         {item.image && (
           <Image
             source={{ uri: `${streamImageForRun(item.id)}` }}
-            style={styles.routeImage}
+            style={styles.runImage}
           />
         )}
       </ScrollView>
@@ -138,11 +133,11 @@ const RunPostCard = ({ item, onLike, onComment, comments, navigation }) => {
             onPress={() => onLike(item.id)}
           />
           <Text style={styles.likeCount} variant="titleMedium">
-            {item.likesCount ?? 0}
+            {item?.likesCount ?? 0}
           </Text>
           <IconButton icon="comment-outline" onPress={() => onComment(item)} />
           <Text style={styles.likeCount} variant="titleMedium">
-            {item.commentsCount ?? 0}
+            {item?.commentsCount ?? 0}
           </Text>
         </View>
       </View>
@@ -156,12 +151,13 @@ const styles = StyleSheet.create({
   justifyContent: "space-between",
   alignItems: "center",
   width: "100%",
-  card: { marginBottom: 15, borderRadius: 10, padding: 10 },
+  card: { marginBottom: 15, borderRadius: 10, padding: 10, paddingTop: 10 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
+    paddingTop: 10,
   },
   userInfo: { marginLeft: 10 },
   dateText: { color: "gray" },
@@ -180,7 +176,13 @@ const styles = StyleSheet.create({
   metricLabel: { color: "gray", paddingRight: 5 },
   routeImage: {
     width: Dimensions.get("window").width - 40,
-    height: 200,
+    height: Dimensions.get("window").width - 40,
+    resizeMode: "contain",
+    paddingHorizontal: 8,
+  },
+  runImage: {
+    width: Dimensions.get("window").width - 40,
+    height: Dimensions.get("window").width - 40,
     resizeMode: "contain",
   },
   divider: {
@@ -213,4 +215,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RunPostCard;
+export default ProfileRunCard;
