@@ -36,10 +36,10 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 
 <table align="center" cellspacing="0" cellpadding="0">
   <tr>
-    <td><img src="../screenshots/welcome.png" height="380"/></td>
-    <td><img src="../screenshots/register1.png" height="380"/></td>
-    <td><img src="../screenshots/register2.png" height="380"/></td>
-    <td><img src="../screenshots/login.png" height="380"/></td>
+    <td><img src="./screenshots/welcome.png" height="380"/></td>
+    <td><img src="./screenshots/register1.png" height="380"/></td>
+    <td><img src="./screenshots/register2.png" height="380"/></td>
+    <td><img src="./screenshots/login.png" height="380"/></td>
   </tr>
 </table>
 
@@ -62,7 +62,7 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 
 <table align="center" cellspacing="0" cellpadding="0">
   <tr>
-    <td><img src="../screenshots/plans.png" height="420"/></td>
+    <td><img src="./screenshots/plans.png" height="420"/></td>
   </tr>
 </table>
 
@@ -74,9 +74,9 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 
 <table align="center" cellspacing="0" cellpadding="0">
   <tr>
-    <td><img src="../screenshots/dailyrun.png" height="380"/></td>
-    <td><img src="../screenshots/predictedrun.png" height="380"/></td>
-    <td><img src="../screenshots/freerun.jpg" height="380"/></td>
+    <td><img src="./screenshots/dailyrun.png" height="380"/></td>
+    <td><img src="./screenshots/predictedrun.png" height="380"/></td>
+    <td><img src="./screenshots/freerun.jpg" height="380"/></td>
   </tr>
 </table>
     <td><img src="../screenshots/run.gif" height="380"/></td>
@@ -92,7 +92,7 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 
 <table align="center" cellspacing="0" cellpadding="0">
   <tr>
-    <td><img src="../screenshots/runsummary.jpg" height="420"/></td>
+    <td><img src="./screenshots/runsummary.jpg" height="420"/></td>
   </tr>
 </table>
 
@@ -105,9 +105,9 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 
 <table align="center" cellspacing="0" cellpadding="0">
   <tr>
-    <td><img src="../screenshots/statistics.jpg" height="380"/></td>
-    <td><img src="../screenshots/rundetails1.jpeg" height="380"/></td>
-    <td><img src="../screenshots/rundetails2.jpeg" height="380"/></td>
+    <td><img src="./screenshots/statistics.jpg" height="380"/></td>
+    <td><img src="./screenshots/rundetails1.jpeg" height="380"/></td>
+    <td><img src="./screenshots/rundetails2.jpeg" height="380"/></td>
   </tr>
 </table>
 
@@ -119,6 +119,7 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 - Likes and comments  
 - Weekly and monthly challenges  
 - Head-to-head challenges with friends  
+
 
 
 
