@@ -79,7 +79,7 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
     <td><img src="./screenshots/freerun.jpg" height="380"/></td>
   </tr>
 </table>
-    <td><img src="../screenshots/run.gif" height="380"/></td>
+    <td><img src="./screenshots/run.gif" height="380"/></td>
 
 
 - Plan-based or free run mode  
@@ -119,6 +119,7 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 - Likes and comments  
 - Weekly and monthly challenges  
 - Head-to-head challenges with friends  
+
 
 
 
