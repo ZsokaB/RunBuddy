@@ -96,8 +96,7 @@ With structured training plan, GPS tracking, voice guidance, and personalized di
 - Target distance and duration  
 
 **Predicted Run (10K Plan)**
-- Distance recommendation based on previous sessions  
-- Performance-based progression using machine learning  
+- Training distance recommendation based on previous performance using machine learning
 
 **Free Run**
 - Manual start of an unstructured run  
@@ -250,4 +249,5 @@ export const config = {
 
 
 Save and restart the Expo app to use the new URL.
+
 
