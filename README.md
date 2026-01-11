@@ -1,6 +1,6 @@
 # 🏃‍♀️ RunBuddy – A Mobile App for Beginner Runners
 
-Acting as a virtual personal trainer, RunBuddy helps beginner runners take their first steps and reach their goals—starting with 5 km and progressing to 10 km. With training plans, GPS tracking, and personalized suggestions, the app encourages users to make running a regular part of their daily routine.
+Acting as a virtual personal trainer, RunBuddy helps beginner runners take their first steps and reach their goals, starting with 5 km and progressing to 10 km. With training plans, GPS tracking, and personalized suggestions, the app encourages users to make running a regular part of their daily routine.
 
 ## 🛠 Tech Stack
 
@@ -20,21 +20,23 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
 ### Guided Running
 - Run/walk intervals  
 - Voice guidance  
-- Real-time GPS tracking  
+- Real-time GPS-based distance, pace, and time tracking  
 
 ### Statistics & Insights
-- Weekly and monthly summaries  
+- Weekly, monthly and yearly summaries  
 - Detailed run history  
 
 ### Community Features
 - Friends and activity feed  
-- Challenges and engagement  
+- Weekly challenges 
 
 ## 📱 Application Screens
 
+---
+
 ### Welcome & Authentication
 
-<table align="center" cellspacing="0" cellpadding="0">
+<table align="center">
   <tr>
     <td><img src="./screenshots/welcome.png" height="380"/></td>
     <td><img src="./screenshots/register1.png" height="380"/></td>
@@ -43,84 +45,135 @@ Acting as a virtual personal trainer, RunBuddy helps beginner runners take their
   </tr>
 </table>
 
-- Motivational welcome screen  
-- User registration and login  
+- Motivational welcome screen introducing the application  
+- Multi-step user registration  
+- Secure user login  
+
+---
 
 ### Home
 
-<table align="center" cellspacing="0" cellpadding="0">
+<table align="center">
   <tr>
-    <td><img src="../screenshots/home.png" height="420"/></td>
+    <td><img src="./screenshots/home.png" height="420"/></td>
   </tr>
 </table>
 
 - Weekly statistics overview  
-- Next recommended training  
-- Weather information (OpenMeteo API)  
+- Next recommended training session  
+- Weather information based on user location (OpenMeteo API)  
+
+---
 
 ### Plans
 
-<table align="center" cellspacing="0" cellpadding="0">
+<table align="center">
   <tr>
     <td><img src="./screenshots/plans.png" height="420"/></td>
   </tr>
 </table>
 
-- Full training plan overview  
-- Completed trainings highlighted  
-- Detailed upcoming run information  
+- Full training plan overview (organized by weeks and sessions)  
+- Completed trainings visually highlighted  
+- Detailed information for upcoming runs  
 
-### Run
+---
 
-<table align="center" cellspacing="0" cellpadding="0">
+### Run Mode Selection
+
+- Choice between **plan-based run** and **free run**
+
+<table align="center">
   <tr>
     <td><img src="./screenshots/dailyrun.png" height="380"/></td>
     <td><img src="./screenshots/predictedrun.png" height="380"/></td>
     <td><img src="./screenshots/freerun.jpg" height="380"/></td>
   </tr>
 </table>
+
+#### Training Plan–Based Run (5K Plan)
+- Displays the current scheduled training session  
+- Warm-up, run, and walk intervals  
+- Visual progress indicator  
+- Target distance and duration  
+
+#### Predicted Run (10K Plan)
+- Distance recommendation based on previous training sessions  
+- Performance-based progression using machine learning  
+
+#### Free Run
+- Manual start of an unstructured run  
+- No predefined distance or intervals  
+
+---
+
+### Active Run
+
+<table align="center">
+  <tr>
     <td><img src="./screenshots/run.gif" height="380"/></td>
+  </tr>
+</table>
 
+- Display of remaining time and distance  
+- Real-time GPS tracking  
+- Current pace monitoring  
+- Automatic run/walk voice guidance  
 
-- Plan-based or free run mode  
-- Real-time tracking  
-- Voice guidance  
-- GPS route visualization  
-- Color-coded run/walk phases  
+---
 
 ### Run Summary
 
-<table align="center" cellspacing="0" cellpadding="0">
+<table align="center">
   <tr>
     <td><img src="./screenshots/runsummary.jpg" height="420"/></td>
   </tr>
 </table>
 
-- Distance, time, pace, calories  
-- Route map  
+- Distance, time, average pace, and calories burned  
+- GPS-based route map  
 - Run quality rating  
-- Notes and photos  
+- Notes and photo attachments  
+
+---
 
 ### Statistics
 
-<table align="center" cellspacing="0" cellpadding="0">
+<table align="center">
   <tr>
     <td><img src="./screenshots/statistics.jpg" height="380"/></td>
+  </tr>
+</table>
+
+- Aggregated running data  
+- Weekly and monthly summaries  
+- Detailed run history  
+
+---
+
+### Run Details
+
+<table align="center">
+  <tr>
     <td><img src="./screenshots/rundetails1.jpeg" height="380"/></td>
     <td><img src="./screenshots/rundetails2.jpeg" height="380"/></td>
   </tr>
 </table>
 
-- Aggregated run data  
-- Detailed run history  
+- Full run data overview  
+- Detailed route visualization with start and end markers  
+- Pace breakdown  
+- Notes, photos, and user rating  
 
-### Community & Challenges
-- Activity feed  
-- Likes and comments  
+---
+
+### Community
+<table align="center">
+  <tr>
+    <td><img src="./screenshots/statistics
+</table>
+- Activity feed with shared runs  
+- Like and comment interactions  
+      ### Challenges
 - Weekly and monthly challenges  
 - Head-to-head challenges with friends  
-
-
-
-
-
