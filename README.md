@@ -223,7 +223,7 @@ cd backend
 dotnet restore
 dotnet run
 ```
-The API runs at http://localhost:7073.
+The API runs at https://localhost:7073.
 
 ### Frontend (React Native / Expo)
 ```bash
@@ -250,3 +250,4 @@ export const config = {
 
 
 Save and restart the Expo app to use the new URL.
+
