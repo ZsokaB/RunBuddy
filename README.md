@@ -211,7 +211,7 @@ With structured training plan, GPS tracking, voice guidance, and personalized di
 - Personal statistics display  
 - Profile and account data editing  
 
----
+
 
 ## Setup
 A React Native (Expo) app with a .NET backend, using **ngrok** for HTTPS.
@@ -249,5 +249,6 @@ export const config = {
 
 
 Save and restart the Expo app to use the new URL.
+
 
 
