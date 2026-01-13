@@ -90,10 +90,9 @@ With structured training plan, GPS tracking, voice guidance, and personalized di
 - Choice between **plan-based run** and **free run**
 
 **Training Plan–Based Run (5K Plan)**
-- Scheduled training session display  
+- Scheduled training session display
+- Target duration  
 - Warm-up, run, and walk intervals  
-- Visual progress indicator  
-- Target distance and duration  
 
 **Predicted Run (10K Plan)**
 - Training distance recommendation based on previous performance using machine learning
@@ -249,6 +248,7 @@ export const config = {
 
 
 Save and restart the Expo app to use the new URL.
+
 
 
 
