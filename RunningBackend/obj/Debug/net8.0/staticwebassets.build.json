@@ -1,0 +1,20 @@
+{
+  "Version": 1,
+  "Hash": "WoLS55BVaxJxXcPwamAE0iQ2M+qskL9WWq69e5UCS5g=",
+  "Source": "RunningBackend",
+  "BasePath": "_content/RunningBackend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "RunningBackend\\wwwroot",
+      "Source": "RunningBackend",
+      "ContentRoot": "C:\\Users\\zsoka\\OneDrive\\Asztali gép\\Running2\\backend\\RunningBackend\\wwwroot\\",
+      "BasePath": "_content/RunningBackend",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [],
+  "Endpoints": []
+}

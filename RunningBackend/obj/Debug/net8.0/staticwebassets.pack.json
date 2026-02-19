@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\zsoka\\OneDrive\\Asztali gép\\Running2\\backend\\RunningBackend\\wwwroot\\profileImage\\7b56d4c7-d71b-4170-a3a3-25ba61de3879\\9e2a0656-393b-4b05-973e-767b3f67256d.jpg",
+      "PackagePath": "staticwebassets\\profileImage\\7b56d4c7-d71b-4170-a3a3-25ba61de3879\\9e2a0656-393b-4b05-973e-767b3f67256d.jpg"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.RunningBackend.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.RunningBackend.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.RunningBackend.props",
+      "PackagePath": "build\\RunningBackend.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.RunningBackend.props",
+      "PackagePath": "buildMultiTargeting\\RunningBackend.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.RunningBackend.props",
+      "PackagePath": "buildTransitive\\RunningBackend.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
